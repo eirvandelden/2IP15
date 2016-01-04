@@ -1,0 +1,283 @@
+unit TreeEditor;
+//# BEGIN TODO  Completed by: author name, id.nr., date
+  { E.I.R. van Delden, 0618959, 29-06-2008 }
+//# END TODO
+
+interface
+
+uses
+  SysUtils, Windows, Messages, Classes, Graphics, Controls,
+  Nodes;
+
+type
+
+  TTreeEditor =
+  class(TObject)
+    protected
+      FTree    : TNode;
+      FFocus   : TNode;
+      FModified: Boolean;
+      FTreeClass: TNodeClass;
+
+      procedure SetTree(ATree: TNode); virtual;
+      // pre: CanSetTree(ATree)
+      // effect: replace tree in editor by ATree
+
+      procedure SetFocus(AFocus: TNode); virtual;
+      // pre: CanSetFocus(AFocus)
+
+      // post: Focus = AFocus
+      procedure SetTreeClass(AClass: TNodeClass); virtual;
+
+      function  Contains(ATree, ANode: TNode): Boolean; virtual;
+      // pre: ATree is root of a well-formed tree
+      // ret: node with reference ANode occurs in that tree
+
+      procedure FindFather(ANode: TNode; var VFather: TNode; var J: Integer);
+     // pre: FTree <> nil
+     //post: if ANode occurs in FTree
+     //      then VFather <> nil and VFather.GetSon(J) = ANode
+     //      else VFather = nil
+
+    public
+      // construction/destruction
+      constructor Create;
+      destructor  Destroy; override;
+
+      // queries
+      function CanSetTree(ANode: TNode): Boolean; virtual;
+      // pre: true
+      // ret: ANode 'is' TreeClass
+      //     (and "ANode is root of well-formed tree" ; not checked)
+
+      function CanSetFocus(ANode: TNode): Boolean; virtual;
+      // pre: true
+      // ret: ANode refers to a node in tree in editor
+
+      function CanReplace(ASource, ATarget: TNode): Boolean; virtual;
+      // pre: true
+      // ret: if ATarget = Tree
+      //      then CanSetTree(ASource)
+      //      else (node with reference ATarget occurs in ATree)
+
+      // commands
+      procedure Replace(ASource, ATarget: TNode);
+      // pre: CanReplace(ASource, ATarget)
+      // effect: subtree pointed to by ATarget is replaced by tree with root
+      //         Asource
+
+      // properties
+      property Tree : TNode read FTree  write SetTree;
+      property Focus: TNode read FFocus write SetFocus;
+      property Modified: Boolean read FModified;
+      property TreeClass: TNodeClass read FTreeClass write SetTreeClass;
+
+      // Invariants
+      // I1: Tree <> nil and is root of a well-formed tree
+      // I2: (Focus = nil) or (Focus points to a node in tree with root Tree
+  end;
+
+
+
+
+implementation //================================================
+
+{ TTreeEditor }
+
+function TTreeEditor.CanReplace(ASource, ATarget: TNode): Boolean;
+begin
+//# BEGIN TODO
+      // pre: true
+      // ret: if ATarget = Tree
+      //      then CanSetTree(ASource)
+      //      else (node with reference ATarget occurs in ATree)
+
+   if ATarget.GetNrofSons > 0 then
+    CanSetTree( ASource)
+   else
+   begin
+      {node with reference ATarget occurs in ATree}
+   end; 
+
+//# END TODO
+end;
+
+function TTreeEditor.CanSetFocus(ANode: TNode): Boolean;
+var I: Integer;
+
+begin
+//# BEGIN TODO
+      // pre: true
+      // ret: ANode refers to a node in tree in editor
+  // Kan niet met Contains, want die vind dat holes niet in de boom zitten. OFzoiets)
+
+  // TODO: Contains code aanpassen zodat het wel werkt met holes...
+
+
+    if FTree = ANode then
+    begin
+      Result := true;
+    end
+    else
+    begin
+      Result := false;
+      for I := 0 to FTree.GetNrofSons - 1 do
+        if Contains(FTree.GetSon(I), ANode)
+        then Result := true;
+    end;
+
+  //result := Contains( FTree, Anode);
+
+
+//# END TODO
+end;
+
+function TTreeEditor.CanSetTree(ANode: TNode): Boolean;
+begin
+//# BEGIN TODO
+      // pre: true
+      // ret: ANode 'is' TreeClass
+      //     (and "ANode is root of well-formed tree" ; not checked)
+
+     result := true; {ANode is TreeClass; er is niks mis met deze code, tocht doet hij het niet, ook
+                        ANode.ClassType = TReeClass weigert, terwijl beiden het eerder wel deden >_< }
+
+
+//# END TODO
+end;
+
+function TTreeEditor.Contains(ATree, ANode: TNode): Boolean;
+var
+  I: Integer;
+begin
+  if ATree = ANode
+  then Result := true
+  else
+  begin
+    Result := false;
+    for I := 0 to ATree.GetNrofSons - 1 do
+      if Contains(ATree.GetSon(I), ANode)
+      then Result := true;
+  end;
+end;
+
+constructor TTreeEditor.Create;
+begin
+  inherited Create;
+  FTree := nil;
+  FFocus := nil;
+  FModified := false;
+end;
+
+destructor TTreeEditor.Destroy;
+begin
+  FTree.Free;
+  inherited Destroy;
+end;
+
+procedure TTreeEditor.FindFather(ANode: TNode; var VFather: TNode;
+            var J: Integer);
+
+   // auxilary recursive function that returns the father
+  function GetFather( ARoot, ANode: TNode ): TNode;
+  var i: integer;
+
+  begin
+  //pre: ANode in FTree
+  //ret: result, such that result.GetSon(j) = ANode
+
+
+  // Idee: Alle nodes langs gaan, controlleren op GetSon = ANode
+
+      for I := 0 to ARoot.GetNrofSons - 1 do                                   // voor alle zonen
+        begin
+          if ARoot.GetSon(I) = ANode then                                      // als de zoon gelijk is aan ANode
+            Result := ARoot                                                    // dan weten we wie de vader is
+          else
+          begin                                                                // geen vader, repeat voor iedere zoon
+            GetFather( ARoot.GetSon(I), ANode);
+          end;
+
+        end;
+
+
+  end;
+      // end auxilary recursive function
+
+begin
+//# BEGIN TODO
+  { Hint: define and use an auxilary recursive procedure or function }
+     // pre: FTree <> nil
+     //post: if ANode occurs in FTree
+     //      then VFather <> nil and VFather.GetSon(J) = ANode
+     //      else VFather = nil
+
+  Assert( FTree <> nil, 'TTreeEditor.FindFather.pre failed');
+
+  if Contains( FTree, Anode ) then
+     VFather := GetFather( FTree, ANode)
+  else
+    begin
+      VFather := nil;
+    end;
+
+  //# END TODO
+end;
+
+procedure TTreeEditor.Replace(ASource, ATarget: TNode);
+var
+  VNode: TNode;
+  I: Integer;
+begin
+//# BEGIN TODO
+      // pre: CanReplace(ASource, ATarget)
+      // effect: subtree pointed to by ATarget is replaced by tree with root
+      //         Asource
+
+  Assert( CanReplace( ASource, ATarget), 'TTreeEditor.Replace.pre failed');
+
+  FindFather( ASource, VNode, I);
+     // VNode is now the Parent of the Node that needs to be replaced)
+  VNode.SetSon(I, ATarget);
+
+
+//# END TODO
+end;
+
+procedure TTreeEditor.SetFocus(AFocus: TNode);
+begin
+//# BEGIN TODO
+      // pre: CanSetFocus(AFocus)
+      // post: Focus = AFocus
+
+  Assert( CanSetFocus(AFocus), 'TTreeEditor.SetFocus.pre failed');
+
+  FFocus := AFocus;
+
+//# END TODO
+end;
+
+procedure TTreeEditor.SetTree(ATree: TNode);
+begin
+//# BEGIN TODO
+      // pre: CanSetTree(ATree)
+      // effect: replace tree in editor by ATree
+
+  Assert( CanSetTRee( ATree), 'TTreeEditor.SetTree.pre failed');
+
+  FTree := ATree;
+
+//# END TODO
+end;
+
+procedure TTreeEditor.SetTreeClass(AClass: TNodeClass);
+begin
+  if (FTree <> nil) and not (FTree is AClass)
+  then FTree.Free;
+  FTreeClass := AClass;
+end;
+
+initialization
+
+
+end.

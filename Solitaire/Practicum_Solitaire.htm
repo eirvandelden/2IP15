@@ -1,0 +1,161 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<meta name="GENERATOR" content="Microsoft FrontPage 6.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<title>Practicum_Solitaire</title>
+</head>
+
+<body>
+
+<h1>2IP15 Programmeermethoden<br>
+Studiejaar 2007-2008</h1>
+<h2>Practicum Blok E (Solitaire case ctudy)</h2>
+<h3>Inleiding</h3>
+<p>Deze opdracht heeft betrekking op de Solitaire case study. In het college, de 
+instructies (en het deeltentamen) zijn daarvan diverse aspecten aan de orde 
+geweest. In deze practicumopdracht wordt een gegeven onvolledige implementatie 
+van het Solitaire spel uitgebreid tot een volledige werkende versie. De opdracht 
+bevat de volgende deelopdrachten en elementen:</p>
+<ol type="a">
+	<li>implementeren van een class (TGame) op grond van zijn contract, daarbij 
+	gebruik makend van andere classes en hun contracten.</li>
+	<li>uitwerken van grafische elementen van de user interface (plaatjes van 
+	kaarten etc.)</li>
+	<li>implementeren van Drag and Drop functionaliteit</li>
+</ol>
+<p>De bijgaande zip-file bevat een directory Demo met een executable Solitaire.exe 
+en een directory Pr_Solitaire_UI2 met daarin een Delphi-project Pr_Solitaire_UI.dpr 
+en een aantal subdirectories:</p>
+<ul>
+	<li>CardSets: Deze bevat een aantal sub-directories, elk met een aantal .bmp 
+	files voor de grafische weergave van cards etc. ;</li>
+	<li>Demo: Deze bevat een demonstratieprogramma Demo.exe ;</li>
+	<li>Pr_Solitaire_UI2: Deze bevat een Delphi-project Pr_Solitaire_UI.dpr met 
+	hulpfiles ;</li>
+	<li>Units: Deze bevat een aantal bij het project behorende units:<ul>
+		<li>CardDeck: Deze bevat de definitie van de class TCardDeck, waarin de 
+		gegevens voor het tekstueel en/of grafisch weergeven van cards en piles 
+		gegroepeerd zijn.</li>
+		<li>CardPiles: Deze bevat definities van de classes TCard, TPile en 
+		subclasses daarvan</li>
+		<li>Game: Deze bevat de definitie van de class TGame, die dient als 
+		'facade' van het Solitaire spel. De class TGame<ul>
+			<li>beheert de diverse piles van het spel en bewaakt de gezamenlijke 
+			consistentie daarvan;</li>
+			<li>biedt functions voor het accesseren van de piles;</li>
+			<li>biedt commands voor de diverse moves van het spel;</li>
+			<li>biedt Boolean functions voor het testen van de precondities van 
+			de moves.</li>
+		</ul>
+		</li>
+	</ul>
+	</li>
+</ul>
+<p>&nbsp;</p>
+<h3>Demo</h3>
+<p>Bij uitvoering van het demonstratieprogramma (de
+executable <font face="Courier New" size="2">Solitaire.exe</font> )wordt een form getoond 
+met een paar tabbladen. Deze bieden een tekstuele en een grafische interface 
+voor het spel. Tijdens het spel kan naar believen tussen deze tabbladen 
+gewisseld worden. De interfaces worden hieronder beschreven.</p>
+<h4>Tekstuele interface</h4>
+<p>Wanneer het tabblad Text geselecteerd is, ziet het geheel er na een tijdje 
+spelen ongeveer als volgt uit:</p>
+<p><img border="0" src="Solitaire_screen_text.JPG" width="790" height="816"></p>
+<p>&nbsp;</p>
+<p>Dit is een tekstuele weergave van de toestand van het spel. Elke kaart wordt 
+aangeduid met een korte string (bijv.: 13H voor de kaart met waarde 13 (King) 
+van de soort H (Hearts). Via de controls onderaan het form kan het spel gespeeld 
+worden (op een heel onhandige manier):</p>
+<ul>
+	<li>NewGame start een nieuw spel;</li>
+	<li>NewCard neemt een card van de DeckPile en plaatst die face-up op de 
+	DiscardPile;</li>
+	<li>FlipTop keert - indien mogelijk - de top card om van de in de From-lijst 
+	geselecteerde (Tableau-)Pile;</li>
+	<li>MoveCard verplaatst - indien mogelijk - een card van de in de From-lijst 
+	geselecteerde pile naar de in de To-lijst geselecteerde pile;</li>
+	<li>MovePile verplaatst - indien mogelijk - een subpile van de in de From-lijst 
+	geselecteerde pile naar de in de To-lijst geselecteerde pile. De positie van 
+	de onderste kaart van de subpile kan geselecteerd worden in de lijst Index.</li>
+</ul>
+<p>Elk van de buttons is alleen actief als de de bijbehorende move een legale 
+move is. Het spel is succesvol beeindigd als alle kaarten naar de vier SuitPiles 
+verplaatst zijn.</p>
+<h4>Grafische interface</h4>
+<p>Via het tabblad Images kan het spel ook grafisch weergegeven worden. De 
+hierboven weergegeven situatie ziet er dan als volgt uit:</p>
+<p><img border="0" src="Solitaire_screen_pictures.JPG" width="790" height="816"></p>
+<p>De bediening via de controls verloopt nog steeds op dezelfde manier. De 
+grafische interface biedt echter ook de mogelijkheid om het spel op een veel 
+comfortabeler manier te spelen d.m.v. &quot;Drag and Drop&quot;.</p>
+<p>&nbsp;</p>
+<h3>Gevraagd:</h3>
+<ol>
+	<li><b>Bewaar de oorspronkelijke project directory en voer onderstaande
+    opdrachten uit op een copie daarvan.</b></li>
+	<li>Experimenteer met het demonstratieprogramma (executable
+	<font face="Courier New" size="2">Solitaire.exe</font>). Probeer zowel de 
+	tekstuele als de grafische interface. Let in het bijzonder op het al dan 
+	niet uitvoerbaar zijn van de diverse besturingsmogelijkheden en op hun 
+	effect.</li>
+	<li>Bestudeer de code in de units van het project. De units Main.pas en 
+	Game.pas zijn onvolledig. In de opdrachten moeten deze verder uitgewerkt 
+	worden. De plaatsen waar code uitgewerkt moet worden zijn in de units 
+	aangegeven met de markeringen:<br>
+	//# BEGIN TODO<br>
+	<br>
+	//# END TODO<br>
+	Laat deze markeringen zelf a.u.b. staan.</li>
+	<li>De opdracht bestaat uit de volgende delen:<ol type="a">
+		<li>Geef alle ontbrekende code van de unit Game.pas. Ga daarbij uit van de 
+	gegeven contracten voor de classes. <span style="background-color: #FFFF00">Let in het bijzonder op het toevoegen 
+	van Assert statements voor het checken van precondities.</span>&nbsp; Bij 
+		correcte uitwerking kan het spel via de tekstuele interface gespeeld 
+		worden.</li>
+		<li>Breid de unit Main.pas zodanig uit, dat in de grafische interface de 
+		cellen gevuld worden met de bitmap van de bijbehorende card of pile. 
+		Hiertoe moet voor beide DrawGrids de gedeeltelijk gegeven OnDrawCell 
+		event handler uitgewerkt worden. Wanneer het DrawGrid opnieuw getekend 
+		wordt, wordt deze event handler aangeroepen voor elk van de cellen van 
+		het DrawGrid. Aan de hand van de parameters ACol en ARow kan bepaald 
+		worden om welke cel het gaat. Vervolgens kan aan de hand van de toestand 
+		van het spel (inspecteer de TGame component en zijn piles) bepaald 
+		worden wat voor een bitmap in de cel getekend moet worden. Na uitwerking 
+		kan het spel gespeeld worden met de controls en grafische weergave van 
+		de cards en piles. De volledige namen van de uit te werken procedures 
+		zijn:<ul>
+			<li>TForm1.DeckDrawGridDrawCell</li>
+			<li>TForm1.TableauDrawGridDrawCell</li>
+		</ul>
+		</li>
+		<li>Breid het geheel uit met Drag and Drop functionaliteit. <br>
+		<span style="background-color: #FFFF00">N.B.: Dit onderdeel zal op het 
+		college van 31 maart nader toegelicht worden. </span><br>
+		Een van de hiervoor benodigde event handlers 
+		(TForm1.TableauDrawGridMouseDown) is als voorbeeld uitgewerkt. De 
+		volgende event handlers moeten nog uitgewerkt worden:<ul>
+			<li>TForm1.DeckDrawGridMouseDown</li>
+			<li>TForm1.DeckDrawGridDragOver</li>
+			<li>TForm1.DeckDrawGridDragDrop</li>
+			<li>TForm1.TableauDrawGridDragOver</li>
+			<li>TForm1.TableauDrawGridDragDrop</li>
+		</ul>
+		</li>
+	</ol>
+	</li>
+	<li>Na volledige correcte uitwerking van onderdelen a, b en c zou de 
+	applicatie net zo moeten werken als het demonstratieprogramma.</li>
+</ol>
+<p>&nbsp;</p>
+<p><span style="background-color: #FFFF00">N.B. De uitwerking dient te worden 
+ingeleverd via PEACH. Nadere aanwijzingen hierover volgen nog via website en/of 
+practicumbegeleiders.</span></p>
+<p>&nbsp;</p>
+
+</body>
+
+</html>

@@ -1,0 +1,63 @@
+unit TreeEditor;
+
+interface
+
+uses
+  SysUtils, Windows, Messages, Classes, Graphics, Controls,
+  Nodes;
+
+type
+
+  TTreeEditor =
+  class(TObject)
+    protected
+      FTree    : TNode;
+      FFocus   : TNode;
+      FModified: Boolean;
+      procedure SetTree(ATree: TNode); virtual;
+      procedure SetFocus(AFocus: TNode); virtual;
+    public
+      property Tree : TNode read FTree  write SetTree;
+      property Focus: TNode read FFocus write SetFocus;
+      property Modified: Boolean read FModified;
+
+      constructor Create;
+      destructor  Destroy; override;
+  end;
+
+
+
+
+implementation //================================================
+
+{ TTreeEditor }
+
+constructor TTreeEditor.Create;
+begin
+  inherited Create;
+  FTree := nil;
+  FFocus := nil;
+  FModified := false;
+end;
+
+destructor TTreeEditor.Destroy;
+begin
+  FTree.Free;
+  inherited Destroy;
+end;
+
+procedure TTreeEditor.SetFocus(AFocus: TNode);
+begin
+  // should check whether AFocus occurs in FTree;
+  FFocus := AFocus;
+end;
+
+procedure TTreeEditor.SetTree(ATree: TNode);
+begin
+  if FTree <> nil
+  then FTree.Free;
+  FTree := ATree;
+end;
+
+initialization
+end.

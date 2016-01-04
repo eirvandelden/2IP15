@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2008-07-03 15:38:58.999.pas,C:\Documents and Settings\Windows Admin\Desktop\2IP15\FormulaLab_3a\Projects\EditLab\Unit1.pas=C:\Documents and Settings\Windows Admin\Desktop\2IP15\FormulaLab_3a\Components\Base\UndoRedo.pas</Transaction>
+    <Transaction>2008-07-03 15:42:10.562.pas,C:\Documents and Settings\Windows Admin\Desktop\2IP15\FormulaLab_3a\Projects\EditLab\Unit1.pas=C:\Documents and Settings\Windows Admin\Desktop\2IP15\FormulaLab_3a\Components\Base\TreeEditorCommands.pas</Transaction>
+  </Transactions>
+</BorlandProject>

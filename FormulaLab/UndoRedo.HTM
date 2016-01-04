@@ -1,0 +1,512 @@
+<HTML><HEAD>
+<TITLE>UndoRedo</TITLE>
+<META NAME="GENERATOR" CONTENT="PasToWeb[Marco Cantщ]">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+<h1>UndoRedo</h1>
+<A NAME=DATE.PAS>
+<p>&nbsp;</p></A>
+
+<table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" width="100%" id="table2">
+	<tr>
+		<td><b>Author</b></td>
+		<td>Kees Hemerik</td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td><b>Version</b></td>
+		<td><b>Date</b></td>
+		<td><b>Comments</b></td>
+	</tr>
+	<tr>
+		<td>0.2</td>
+		<td>2008 02 27</td>
+		<td>Introduction is incomplete.</td>
+	</tr>
+	<tr>
+		<td>0.1</td>
+		<td>2005 mm dd</td>
+		<td>First draft: Intended as a simpler presentation of similar example 
+		in Meyer's OOCC.</td>
+	</tr>
+</table>
+<p>&nbsp;</p>
+<h2><font face="Arial">Introduction</font></h2>
+<p><font face="Arial" size="2">[<i>Incomplete</i>]</font></p>
+<p><font face="Arial" size="2">This note describes a simple Undo/Redo mechanism 
+for interactive systems. It is inspired by the treatment of a similar example in 
+Chapter 21 of Bertrand Meyer's &quot;Object-Oriented Software Construction&quot; (2nd 
+edition).</font><br>
+&nbsp;</p>
+<h2><font face="Arial">Formal Model</font></h2>
+<p><font face="Arial" size="2">Let&nbsp; Q&nbsp; be the set of states of the 
+system.</font></p>
+<p><font face="Arial" size="2">Let&nbsp; C&nbsp; be the set of commands.</font></p>
+<p><font size="2" face="Arial">Let&nbsp; </font><font size="2">
+<font face="Symbol">d</font><font face="Arial"> : C </font><font face="Symbol">®</font><font face="Arial"> 
+Q </font><font face="Symbol">®</font><font face="Arial"> Q&nbsp; be the state 
+transition function.&nbsp; Notation&nbsp; </font><font face="Symbol">d</font></font><font size="2" face="Arial"><sub>c</sub>(q) 
+= q' .</font></p>
+<p>&nbsp;</p>
+<p><font face="Arial" size="2">The transitions of the controller can be 
+expressed by means of a simple transition system of ( U , s, R ) triples, where:</font></p>
+<ul>
+	<li><font face="Arial" size="2">U is a sequence of undoable commands</font></li>
+	<li><font face="Arial" size="2">s is the current state</font></li>
+	<li><font face="Arial" size="2">R is a sequence of redoable commands</font></li>
+</ul>
+<p><font face="Arial" size="2">DONE = C*</font></p>
+<p><font face="Arial" size="2">TODO = C*</font></p>
+<p><font face="Arial" size="2">CONFIG = DONE Ч Q Ч TODO</font></p>
+<p>&nbsp;</p>
+<table border="1" cellpadding="0" cellspacing="0" style="border-collapse: collapse" width="100%" id="table1">
+	<tr>
+		<td align="center"><b><font face="Arial">Before</font></b></td>
+		<td align="center"><b><font face="Arial">Transition</font></b></td>
+		<td align="center"><b><font face="Arial">After</font></b></td>
+		<td>
+		<p align="center"><b><font face="Arial">Remarks</font></b></td>
+	</tr>
+	<tr>
+		<td align="center">&nbsp;</td>
+		<td align="center"><font face="Arial">Create</font><br>
+		<font face="Wingdings">р</font></td>
+		<td align="center"><font face="Symbol">( бс , </font><font face="Arial">
+		s0 , </font><font face="Symbol">бс )</font></td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td align="center"><font face="Arial">( U , s , R )</font></td>
+		<td align="center"><font face="Arial">DO(c)</font><br>
+		<font face="Wingdings">р</font></td>
+		<td align="center"><font face="Arial">( U ++ </font><font face="Symbol">
+		б</font><font face="Arial">c</font><font face="Symbol">с</font><font face="Arial"> 
+		, </font><font face="Symbol">d</font><font face="Arial"><sub>c</sub>(s) 
+		, </font><font face="Symbol">бс )</font><p><font face="Symbol">( бс ,
+		</font><font face="Symbol">d</font><font face="Arial"><sub>c</sub>(s),
+		</font><font face="Symbol">бс</font><font face="Arial"> )</font></td>
+		<td><font face="Arial">&nbsp; if Reversible(c)</font><p>
+		<font face="Arial">&nbsp; if not Reversible(c)</font></td>
+	</tr>
+	<tr>
+		<td align="center"><font face="Arial">( U ++ </font><font face="Symbol">
+		б</font><font face="Arial">c</font><font face="Symbol">с</font><font face="Arial"> 
+		, s, R )</font></td>
+		<td align="center"><font face="Arial">UNDO</font><br>
+		<font face="Wingdings">р</font></td>
+		<td align="center"><font face="Arial">( U , </font><font face="Symbol">d</font><font face="Arial"><sub>c</sub><sup>-1</sup>(s),
+		</font><font face="Symbol">б</font><font face="Arial">c</font><font face="Symbol">с</font><font face="Arial"> 
+		++ R )</font></td>
+		<td><font face="Arial">&nbsp; </font><font face="Symbol">d</font><font face="Arial"><sub>c</sub><sup>-1</sup>(s) 
+		is the reverse of </font><font face="Symbol">d</font><font face="Arial"><sub>c</sub>(s)</font></td>
+	</tr>
+	<tr>
+		<td align="center"><font face="Arial">( U , s , </font>
+		<font face="Symbol">б</font><font face="Arial">c</font><font face="Symbol">с</font><font face="Arial"> 
+		++ R )</font></td>
+		<td align="center"><font face="Arial">REDO</font><br>
+		<font face="Wingdings">р</font></td>
+		<td align="center"><font face="Arial">( U ++ </font><font face="Symbol">
+		б</font><font face="Arial">c</font><font face="Symbol">с</font><font face="Arial"> 
+		, </font><font face="Symbol">d</font><font face="Arial"><sub>c</sub>(s) 
+		, R )</font></td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td align="center"><font face="Arial">( U , s , R )</font></td>
+		<td align="center"><font face="Arial">Destroy</font><br>
+		<font face="Wingdings">р</font></td>
+		<td align="center">&nbsp;</td>
+		<td>&nbsp;</td>
+	</tr>
+</table>
+<H3>&nbsp;</H3>
+<h2><font face="Arial">Implementation</font></h2>
+<p><font face="Arial" size="2">By means of object-oriented programming 
+techniques we can realize a clean separation between the general behaviour of 
+the transition system given above on the one hand and the specifics of a 
+particular system on the other hand. The general behaviour can be implemented by 
+means of a class TController, which maintains two stacks of commands. Commands 
+are described by means of a fully abstract class TCommand, which provides for 
+executing and reversing a commands. The class headers are as follows (the 
+complete code is given in unit <a href="#UNDOREDO.PAS">UNDOREDO.PAS</a> in the Appendix):</font></p>
+<p><font face="Courier New" size="2">&nbsp;
+
+  <FONT COLOR="#000080"><I>// Abstract command class</I></FONT><br>
+&nbsp; TCommand =<br>
+&nbsp;
+  <B>class</B>(TObject)<br>
+&nbsp;&nbsp;&nbsp;
+    <B>procedure</B> Execute; <B>virtual</B>; <B>abstract</B>;<br>
+&nbsp;&nbsp;&nbsp;
+    <B>procedure</B> Reverse; <B>virtual</B>; <B>abstract</B>;<br>
+&nbsp;&nbsp;&nbsp;
+    <B>function</B>&nbsp; Reversible: Boolean; <B>virtual</B>; <B>abstract</B>;<br>
+&nbsp;
+  <B>end</B>;<br>
+<br>
+&nbsp;
+
+  <FONT COLOR="#000080"><I>// The controller maintains the undo list FU and redo list FR</I></FONT><br>
+&nbsp; TController =<br>
+&nbsp;
+  <B>class</B>(TObject)<br>
+&nbsp;&nbsp;&nbsp;
+    <B>protected</B><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FU: TObjectStack;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FR: TObjectStack;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      <B>procedure</B> ClearStack(AStack: TObjectStack);<br>
+&nbsp;&nbsp;&nbsp;
+    <B>public</B><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <B>constructor</B> Create;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <B>destructor</B> Destroy; <B>override</B>;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+
+      <B>procedure</B> Clear;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <B>procedure</B> DoCommand(ACommand: TCommand);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <B>procedure</B> Undo;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <B>procedure</B> Redo;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <B>function</B>&nbsp; CanUndo: Boolean;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      <B>function</B>&nbsp; CanRedo: Boolean;<br>
+&nbsp;
+  <B>end</B>;<br>
+&nbsp;</font></p>
+<p><font face="Arial" size="2">For a particular application we define a new set 
+of subclasses of TCommand, one for each command of the system. E.g., suppose 
+that we are dealing with a simple line editor, maintaining a list of values of 
+type TLine in an object of class TLineList, which provides a.o. operations like:</font></p>
+<ul>
+	<li><font face="Arial" size="2">Insert(I, L)&nbsp;&nbsp; // Insert line&nbsp; 
+	L&nbsp; at position&nbsp; I.</font></li>
+	<li><font face="Arial" size="2">Delete(L)&nbsp;&nbsp;&nbsp;&nbsp; // Delete 
+	line at position I </font></li>
+</ul>
+<p><font face="Arial" size="2">This would lead to the following two subclasses 
+of TCommand:</font></p>
+<p><font face="Courier New" size="2">&nbsp; TCommand_Insert =<br>
+&nbsp;
+  <B>class</B>(TCommand)<br>
+&nbsp;
+  <B>protected</B><br>
+&nbsp;&nbsp;&nbsp;
+    <FONT COLOR="#000080"><I>// command parameters</I></FONT><br>
+&nbsp;&nbsp;&nbsp; FI: Integer;<br>
+&nbsp;&nbsp;&nbsp; FLine: TLine;<br>
+<br>
+&nbsp;&nbsp;&nbsp;
+
+    <FONT COLOR="#000080"><I>// additional data for reverse</I></FONT><br>
+&nbsp;&nbsp;&nbsp;
+    <FONT COLOR="#000080"><I>// (none)</I></FONT><br>
+&nbsp;
+  <B>public</B><br>
+&nbsp;&nbsp;&nbsp;
+    <B>constructor</B> Create(AI: Integer; ALine: TLine);<br>
+&nbsp;&nbsp;&nbsp;
+    <B>procedure</B>&nbsp;&nbsp;   Execute; <B>override</B>;<br>
+&nbsp;&nbsp;&nbsp;
+    <B>procedure</B>&nbsp;&nbsp;   Reverse; <B>override</B>;<br>
+&nbsp;&nbsp;&nbsp;
+    <B>function</B>&nbsp;&nbsp;&nbsp; Reversible: Boolean; <B>override</B>;<br>
+&nbsp;
+  <B>end</B>;<br>
+<br>
+&nbsp; TCommand_Delete =<br>
+&nbsp;
+  <B>class</B>(TCommand)<br>
+&nbsp;
+  <B>protected</B><br>
+&nbsp;&nbsp;&nbsp;
+    <FONT COLOR="#000080"><I>// command parameters</I></FONT><br>
+&nbsp;&nbsp;&nbsp; FI: Integer;<br>
+<br>
+&nbsp;&nbsp;&nbsp;
+
+    <FONT COLOR="#000080"><I>// additional data for reverse</I></FONT><br>
+&nbsp;&nbsp;&nbsp; FDeletedLine: TLine;<br>
+&nbsp;
+  <B>public</B><br>
+&nbsp;&nbsp;&nbsp;
+    <B>constructor</B> Create(AI: Integer);<br>
+&nbsp;&nbsp;&nbsp;
+    <B>procedure</B>&nbsp;&nbsp;   Execute; <B>override</B>;<br>
+&nbsp;&nbsp;&nbsp;
+    <B>procedure</B>&nbsp;&nbsp;   Reverse; <B>override</B>;<br>
+&nbsp;&nbsp;&nbsp;
+    <B>function</B>&nbsp;&nbsp;&nbsp; Reversible: Boolean; <B>override</B>;<br>
+&nbsp;
+  <B>end</B>;<br>
+&nbsp;</font></p>
+<p><font face="Arial" size="2">Each of the classes has a constructor with 
+parameters corresponding to the parameters of the command, which are stored in 
+protected fields. The Execute method will use these values when it calls the 
+corresponding command of the TLineList object. In addition, each command object 
+stores in private fields the data it needs to perform a correct Reverse 
+operation. E.g. in class TCommand_Delete. The complete code for this example s 
+given in unit <a href="#LINEEDITORCOMMANDS.PAS">LINEEDITORCOMMANDS.PAS</a> in the Appendix.</font></p>
+<A NAME=UNDOREDO.PAS>
+<h2>&nbsp;</h2>
+<h2><font face="Arial">Appendix: Code</font></h2>
+<H3>UNDOREDO.PAS</H3></A>
+
+<PRE>
+<B>unit</B> UndoRedo;
+
+<FONT COLOR="#000080"><I>//</I></FONT>
+<FONT COLOR="#000080"><I>//  This unit implements a simple Undo/Redo mechanism for interactive systems.</I></FONT>
+<FONT COLOR="#000080"><I>//  It is inspired by the treatment of a similar example in Chapter 21 of</I></FONT>
+<FONT COLOR="#000080"><I>//  Bertrand Meyer's &quot;Object-Oriented Software Construction&quot; (2nd edition).</I></FONT>
+<FONT COLOR="#000080"><I>//</I></FONT>
+<FONT COLOR="#000080"><I>//  The mechanism can be simply described by means of the following transition</I></FONT>
+<FONT COLOR="#000080"><I>//  system of ( U, s, R ) triples, in which  s  is the state of the system ,</I></FONT>
+<FONT COLOR="#000080"><I>//  U is the list of undoable commands and  R  is the list of redoable commands.</I></FONT>
+<FONT COLOR="#000080"><I>//</I></FONT>
+<FONT COLOR="#000080"><I>//                        Create</I></FONT>
+<FONT COLOR="#000080"><I>//                          |-    ( &lt;&gt; , s0 , &lt;&gt; )</I></FONT>
+<FONT COLOR="#000080"><I>//</I></FONT>
+<FONT COLOR="#000080"><I>//</I></FONT>
+<FONT COLOR="#000080"><I>//                        Do(c)</I></FONT>
+<FONT COLOR="#000080"><I>//  ( U , s , R )           |-    ( U ++ &lt;c&gt; , c(s) , &lt;&gt; )   if  reversible(c)</I></FONT>
+<FONT COLOR="#000080"><I>//                          |-    ( &lt;&gt; , c(s) , &lt;&gt; )         if ~reversible(c)</I></FONT>
+<FONT COLOR="#000080"><I>//</I></FONT>
+<FONT COLOR="#000080"><I>//                        Undo</I></FONT>
+<FONT COLOR="#000080"><I>//  ( U ++ &lt;c&gt; , s , R )    |-    ( U , cRev(s) , &lt;c&gt; ++ R ) // cRev reverts c</I></FONT>
+<FONT COLOR="#000080"><I>//</I></FONT>
+<FONT COLOR="#000080"><I>//                        Redo</I></FONT>
+<FONT COLOR="#000080"><I>//  ( U , s , &lt;c&gt; ++ R )    |-    ( U ++ &lt;c&gt; , c(s) , R )</I></FONT>
+<FONT COLOR="#000080"><I>//</I></FONT>
+<FONT COLOR="#000080"><I>//                        Destroy</I></FONT>
+<FONT COLOR="#000080"><I>//  ( U , s , R )           |-</I></FONT>
+<FONT COLOR="#000080"><I>//</I></FONT>
+
+
+<B>interface</B>
+
+<B>uses</B>
+  Contnrs;
+
+<B>type</B>
+
+  <FONT COLOR="#000080"><I>// Abstract command class</I></FONT>
+  TCommand =
+  <B>class</B>(TObject)
+    <B>procedure</B> Execute; <B>virtual</B>; <B>abstract</B>;
+    <B>procedure</B> Reverse; <B>virtual</B>; <B>abstract</B>;
+    <B>function</B>  Reversible: Boolean; <B>virtual</B>; <B>abstract</B>;
+  <B>end</B>;
+
+  <FONT COLOR="#000080"><I>// The controller maintains the undo list FU and redo list FR</I></FONT>
+  TController =
+  <B>class</B>(TObject)
+    <B>protected</B>
+      FU: TObjectStack;
+      FR: TObjectStack;
+
+      <B>procedure</B> ClearStack(AStack: TObjectStack);
+    <B>public</B>
+      <B>constructor</B> Create;
+      <B>destructor</B> Destroy; <B>override</B>;
+
+      <B>procedure</B> Clear;
+      <B>procedure</B> DoCommand(ACommand: TCommand);
+      <B>procedure</B> Undo;
+      <B>procedure</B> Redo;
+      <B>function</B>  CanUndo: Boolean;
+      <B>function</B>  CanRedo: Boolean;
+  <B>end</B>;
+
+<B>implementation</B> <FONT COLOR="#000080"><I>//===============================================================</I></FONT>
+
+<FONT COLOR="#000080"><I>{ TController }</I></FONT>
+
+<B>constructor</B> TController.Create;
+<B>begin</B>
+  <B>inherited</B> Create;
+  FU := TObjectStack.Create;
+  FR := TObjectStack.Create;
+<B>end</B>;
+
+<B>destructor</B> TController.Destroy;
+<B>begin</B>
+  ClearStack(FU);
+  ClearStack(FR);
+  FU.Free;
+  FR.Free;
+  <B>inherited</B> Destroy;
+<B>end</B>;
+
+<B>procedure</B> TController.DoCommand(ACommand: TCommand);
+<B>begin</B>
+  ACommand.Execute;
+
+  <B>if</B> ACommand.Reversible
+  <B>then</B> FU.Push(ACommand)             <FONT COLOR="#000080"><I>// extend FU</I></FONT>
+  <B>else</B>
+  <B>begin</B>
+    ClearStack(FU);                  <FONT COLOR="#000080"><I>// clear  FU</I></FONT>
+    ACommand.Free;
+  <B>end</B>;
+
+  ClearStack(FR);                    <FONT COLOR="#000080"><I>// clear  FR</I></FONT>
+<B>end</B>;
+
+<B>procedure</B> TController.Undo;
+<B>var</B>
+  VCommand: TCommand;
+<B>begin</B>
+  VCommand := FU.Pop <B>as</B> TCommand;
+  VCommand.Reverse;
+  FR.Push(VCommand);
+<B>end</B>;
+
+<B>procedure</B> TController.Redo;
+<B>var</B>
+  VCommand: TCommand;
+<B>begin</B>
+  VCommand := FR.Pop <B>as</B> TCommand;
+  VCommand.Execute;
+  FU.Push(VCommand);
+<B>end</B>;
+
+<B>function</B> TController.CanUndo: Boolean;
+<B>begin</B>
+  Result := FU.Count &gt; 0;
+<B>end</B>;
+
+<B>function</B> TController.CanRedo: Boolean;
+<B>begin</B>
+  Result := FR.Count &gt; 0;
+<B>end</B>;
+
+
+<B>procedure</B> TController.Clear;
+<B>begin</B>
+  ClearStack(FU);
+  ClearStack(FR);
+<B>end</B>;
+
+<B>procedure</B> TController.ClearStack(AStack: TObjectStack);
+<B>begin</B>
+  <B>while</B> AStack.Count &gt; 0
+  <B>do</B> AStack.Pop.Free;
+<B>end</B>;
+
+<B>end</B>.</PRE>
+<PRE>
+&nbsp;</PRE>
+<A NAME=LINEEDITORCOMMANDS.PAS><H3>LINEEDITORCOMMANDS.PAS</H3></A>
+
+<PRE>
+<B>unit</B> LineEditorCommands;
+
+<B>interface</B>
+
+<B>uses</B>
+  UndoRedo;
+
+<B>type</B>
+  TLine, TLineList; <FONT COLOR="#000080"><I>// assumed</I></FONT>
+
+<B>var</B>
+  Lines: TLineList;
+
+<B>type</B>
+  TCommand_Insert =
+  <B>class</B>(TCommand)
+  <B>protected</B>
+    <FONT COLOR="#000080"><I>// command parameters</I></FONT>
+    FI: Integer;
+    FLine: TLine;
+
+    <FONT COLOR="#000080"><I>// additional data for reverse</I></FONT>
+    <FONT COLOR="#000080"><I>// (none)</I></FONT>
+  <B>public</B>
+    <B>constructor</B> Create(AI: Integer; ALine: TLine);
+    <B>procedure</B>   Execute; <B>override</B>;
+    <B>procedure</B>   Reverse; <B>override</B>;
+    <B>function</B>    Reversible: Boolean; <B>override</B>;
+  <B>end</B>;
+
+  TCommand_Delete =
+  <B>class</B>(TCommand)
+  <B>protected</B>
+    <FONT COLOR="#000080"><I>// command parameters</I></FONT>
+    FI: Integer;
+
+    <FONT COLOR="#000080"><I>// additional data for reverse</I></FONT>
+    FDeletedLine: TLine;
+  <B>public</B>
+    <B>constructor</B> Create(AI: Integer);
+    <B>procedure</B>   Execute; <B>override</B>;
+    <B>procedure</B>   Reverse; <B>override</B>;
+    <B>function</B>    Reversible: Boolean; <B>override</B>;
+  <B>end</B>;
+
+<B>implementation</B>
+
+<FONT COLOR="#000080"><I>{ TCommand_Insert }</I></FONT>
+
+<B>constructor</B> TCommand_Insert.Create(AI: Integer; ALine: TLine);
+<B>begin</B>
+  <B>inherited</B> Create;
+  FI := AI;
+  FLine := ALine;
+<B>end</B>;
+
+<B>procedure</B> TCommand_Insert.Execute;
+<B>begin</B>
+  Lines.Insert(FI, FLine);
+<B>end</B>;
+
+<B>procedure</B> TCommand_Insert.Reverse;
+<B>begin</B>
+  Lines.Delete(FI);
+<B>end</B>;
+
+<B>function</B> TCommand_Insert.Reversible: Boolean;
+<B>begin</B>
+  Result := true;
+<B>end</B>;
+
+<FONT COLOR="#000080"><I>{ TCommand_Delete }</I></FONT>
+
+<B>constructor</B> TCommand_Delete.Create(AI: Integer);
+<B>begin</B>
+  <B>inherited</B> Create;
+  FI := AI;
+<B>end</B>;
+
+<B>procedure</B> TCommand_Delete.Execute;
+<B>begin</B>
+  <FONT COLOR="#000080"><I>// remember line to be deleted</I></FONT>
+  FDeletedLine := Lines[FI];
+
+  <FONT COLOR="#000080"><I>// execute command</I></FONT>
+  Lines.Delete(FI);
+<B>end</B>;
+
+<B>procedure</B> TCommand_Delete.Reverse;
+<B>begin</B>
+  Lines.Insert(FI, FDeletedLine);
+<B>end</B>;
+
+<B>function</B> TCommand_Delete.Reversible: Boolean;
+<B>begin</B>
+  Result := true;
+<B>end</B>;
+
+<B>end</B>.</PRE>
+<PRE>
+&nbsp;</PRE><HR><CENTER<I>
+</BODY> </HTML>

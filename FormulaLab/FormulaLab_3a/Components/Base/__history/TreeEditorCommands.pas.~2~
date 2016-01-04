@@ -1,0 +1,162 @@
+unit TreeEditorCommands;
+
+interface
+
+uses
+  UndoRedo, Nodes;
+
+
+
+type
+  // ===== DoClear ===================================================
+  TCommand_DoClear =
+  class(TCommand)
+  protected
+    // command parameters
+    // none
+
+    // additional data for reverse
+    FDeletedTree: TNode;
+
+  public
+    constructor Create;
+    procedure   Execute; override;
+    procedure   Reverse; override;
+    function    Reversible: Boolean; override;
+  end;
+
+  // ===== DoCut ===================================================
+  TCommand_DoCut =
+  class(TCommand)
+  protected
+    // command parameters
+    // FFocus: TNode;
+
+    // additional data for reverse
+    FDeletedTree: TNode;
+  public
+    constructor Create;
+    procedure   Execute; override;
+    procedure   Reverse; override;
+    function    Reversible: Boolean; override;
+  end;
+
+  // ===== DoDelete ===================================================
+    TCommand_DoDelete =
+  class(TCommand)
+  protected
+    // command parameters
+    //FFocus: TNode;
+
+    // additional data for reverse
+    FDeletedTree: TNode;
+  public
+    constructor Create;
+    procedure   Execute; override;
+    procedure   Reverse; override;
+    function    Reversible: Boolean; override;
+  end;
+
+  // ===== DoExpand ===================================================
+    TCommand_DoExpand =
+  class(TCommand)
+  protected
+    // command parameters
+    FNew: TNode;
+
+    // additional data for reverse
+    FNew: TNode;
+    // geen FDeletedTree, want Expand word alleen gebruikt op holes
+  public
+    constructor Create(ANew: TNode);
+    procedure   Execute; override;
+    procedure   Reverse; override;
+    function    Reversible: Boolean; override;
+  end;
+  // ===== DoPaste ===================================================
+    TCommand_DoPaste =
+  class(TCommand)
+  protected
+    // command parameters
+    // none
+
+    // additional data for reverse
+    FPastedTree: TNode;
+  public
+    constructor Create;
+    procedure   Execute; override;
+    procedure   Reverse; override;
+    function    Reversible: Boolean; override;
+  end;
+
+  // ===== DoCopy ===================================================
+    TCommand_DoCopy =
+  class(TCommand)
+  protected
+    // command parameters
+    // none
+
+    // additional data for reverse
+    FDeletedClipboardContens: TNode;
+
+  public
+    constructor Create(AI: Integer);
+    procedure   Execute; override;
+    procedure   Reverse; override;
+    function    Reversible: Boolean; override;
+  end;
+
+implementation
+
+{ TCommand_Insert }
+
+constructor TCommand_Insert.Create(AI: Integer; ALine: TLine);
+begin
+  inherited Create;
+  FI := AI;
+  FLine := ALine;
+end;
+
+procedure TCommand_Insert.Execute;
+begin
+  Lines.Insert(FI, FLine);
+end;
+
+procedure TCommand_Insert.Reverse;
+begin
+  Lines.Delete(FI);
+end;
+
+function TCommand_Insert.Reversible: Boolean;
+begin
+  Result := true;
+end;
+
+{ TCommand_Delete }
+
+constructor TCommand_Delete.Create(AI: Integer);
+begin
+  inherited Create;
+  FI := AI;
+end;
+
+procedure TCommand_Delete.Execute;
+begin
+  // remember line to be deleted
+  FDeletedLine := Lines[FI];
+
+  // execute command
+  Lines.Delete(FI);
+end;
+
+procedure TCommand_Delete.Reverse;
+begin
+  Lines.Insert(FI, FDeletedLine);
+end;
+
+function TCommand_Delete.Reversible: Boolean;
+begin
+  Result := true;
+end;
+
+end.

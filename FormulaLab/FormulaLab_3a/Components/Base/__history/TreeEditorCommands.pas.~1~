@@ -1,0 +1,99 @@
+unit TreeEditorCommands;
+
+interface
+
+uses
+  UndoRedo;
+
+type
+  TLine, TLineList; // assumed
+
+var
+  Lines: TLineList;
+
+type
+  TCommand_Insert =
+  class(TCommand)
+  protected
+    // command parameters
+    FI: Integer;
+    FLine: TLine;
+
+    // additional data for reverse
+    // (none)
+  public
+    constructor Create(AI: Integer; ALine: TLine);
+    procedure   Execute; override;
+    procedure   Reverse; override;
+    function    Reversible: Boolean; override;
+  end;
+
+  TCommand_Delete =
+  class(TCommand)
+  protected
+    // command parameters
+    FI: Integer;
+
+    // additional data for reverse
+    FDeletedLine: TLine;
+  public
+    constructor Create(AI: Integer);
+    procedure   Execute; override;
+    procedure   Reverse; override;
+    function    Reversible: Boolean; override;
+  end;
+
+implementation
+
+{ TCommand_Insert }
+
+constructor TCommand_Insert.Create(AI: Integer; ALine: TLine);
+begin
+  inherited Create;
+  FI := AI;
+  FLine := ALine;
+end;
+
+procedure TCommand_Insert.Execute;
+begin
+  Lines.Insert(FI, FLine);
+end;
+
+procedure TCommand_Insert.Reverse;
+begin
+  Lines.Delete(FI);
+end;
+
+function TCommand_Insert.Reversible: Boolean;
+begin
+  Result := true;
+end;
+
+{ TCommand_Delete }
+
+constructor TCommand_Delete.Create(AI: Integer);
+begin
+  inherited Create;
+  FI := AI;
+end;
+
+procedure TCommand_Delete.Execute;
+begin
+  // remember line to be deleted
+  FDeletedLine := Lines[FI];
+
+  // execute command
+  Lines.Delete(FI);
+end;
+
+procedure TCommand_Delete.Reverse;
+begin
+  Lines.Insert(FI, FDeletedLine);
+end;
+
+function TCommand_Delete.Reversible: Boolean;
+begin
+  Result := true;
+end;
+
+end.

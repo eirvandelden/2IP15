@@ -1,0 +1,574 @@
+unit CardPiles;
+
+{ Author: Kees Hemerik
+  Version history:
+  0.4 d.d. 20080318
+    - Added: invariant for TDeckPile, TDeckPile.Acceptable
+  0.3 d.d. 20080314
+    - Added: function IntToSuit
+  0.2 d.d. 20080310
+    - Corrected: TTableauPile.Acceptable; old version did not accept facedown
+      cards.
+    - Added: type TPileKind, class function PileKind, to be able to distinguish
+      between different kinds of piles.
+  0.1 d.d. 20080301
+}
+
+interface
+
+type
+  // card characteristics
+  TSuit = (suHeart, suClub, suDiamond, suSpade);
+  TValue = 1..13;
+  TCardColor = (ccRed, ccBlack);
+
+  //----------------------------------------------------------------------------
+  // TPileKind is used to distinguish between different kinds of card piles.
+  // Each pile class has a class function PileKind: TPileKind, which returns
+  // a value which is unique for that class. E.g.
+  //   TDeckPile.PileKind returns pkDeck
+  //----------------------------------------------------------------------------
+  TPileKind = (pkBase, pkDeck, pkDiscard, pkSuit, pkTableau);
+
+
+  //----------------------------------------------------------------------------
+  // TCard is the class for cards in the solitaire game
+  //----------------------------------------------------------------------------
+  TCard =
+  class(TObject)
+  private
+    FSuit: TSuit;
+    FValue: TValue;
+    FFaceUp: Boolean;
+  public
+    // construction/destruction
+    constructor Create(AValue: TValue; ASuit: TSuit);
+    // pre: true
+    // post: Value = AValue, Suit = ASuit, FaceUp = false
+
+    // primitive queries
+    function Suit: TSuit;
+    function Value: TValue;
+    function FaceUp: Boolean;
+
+    // derived queries
+    function Color: TCardColor;
+    // pre: true
+    // ret: ccRed   if Suit in [suHeart, suDiamond],
+    //      ccBlack if Suit in [suClub, suSpade]
+
+    //commands
+    procedure Flip;
+    // pre: true
+    // post: FaceUp' = not 'FaceUp
+    procedure SetFaceUp(AFaceUp: Boolean);
+    // pre: true
+    // post: FaceUp' = AFaceUp
+  end;
+
+  
+  //----------------------------------------------------------------------------
+  // TPile is base class for all card piles in the solitaire game
+  //----------------------------------------------------------------------------
+  TPile =
+  class(TObject)
+  protected
+    FList: array of TCard;
+    FCapacity: Integer;
+    FCount: Integer;
+
+    // private invariants
+    // Pri0: FCapacity = Length(FList)
+    // Pri1: 0 <= FCount <= Length(FList)
+
+    // abstraction relation
+    // M = FList[0..FCount-1]
+  public
+    // construction/destruction
+    constructor Create(ACapacity: Integer);
+    // pre: 0 <= ACapacity
+    // post: M = [], Cap = ACapacity
+    destructor Destroy; override;
+
+    // queries
+    function Capacity: Integer;
+    // pre: true
+    // ret: Cap
+    function Count: Integer;
+    // pre: true
+    // ret: |M|
+    function Card(I: Integer): TCard;
+    // pre: 0 <= I < Count
+    // ret: M(I)
+
+    function IsEmpty: Boolean;
+    // pre: true
+    // ret: Count = 0
+    function Top: TCard;
+    // pre: Count > 0
+    // ret: Card(Count - 1)
+    function Acceptable(ACard: TCard): Boolean; virtual;
+    // pre: true
+    // ret: true
+    // N.B.: will be overridden in descendants
+    class function PileKind: TPileKind; virtual; 
+
+    // commands
+    procedure Put(ACard: TCard); virtual;
+    // pre: (Count < Capacity) and Acceptable(ACard)
+    // post: M' = 'M ++ [ACard]
+    procedure Remove(var ACard: TCard); virtual;
+    // pre: M = S ++ [C]
+    // post: (M = S) and (ACard = C)
+
+    // model variables
+    // M: sequence of TCard
+    // Cap: integer  (capacity)
+
+    // invariants
+    // SmallEnough: 0 <= Count <= Capacity
+  end;
+
+  //----------------------------------------------------------------------------
+  // TSuitPile is a class for a suit pile in the solitaire game.
+  // it has the following properties:
+  // - all cards in the pile are of the same suit, which is the suit of the pile
+  // - all cards in the pile are face-up
+  // - the cards in the pile have subsequent increasing values, starting with 1
+  // - the pile is complete when it contains all cards of the suit, i.e. it
+  // - contains the whole range 1..13 of values
+  //----------------------------------------------------------------------------
+  TSuitPile =
+  class(TPile)
+  private
+    FSuit: TSuit;
+  public
+    // construction/destruction
+    constructor Create(ACapacity: Integer; ASuit: TSuit);
+    // pre: 13 <= ACapacity
+    // post: (inherited Create).post and (Suit = ASuit)
+
+    // queries
+    function Suit: TSuit;
+    function Acceptable(ACard: TCard): Boolean; override;
+    // pre: true
+    // ret: (ACard.Suit = Suit) and (ACard.FaceUp) and
+    //      ( ( (Count = 0) and ACard.Value = 1))
+    //        or ( (Count > 0)
+    //             and ACard.Value = Top.Value + 1  ) )
+    class function PileKind: TPileKind; override;
+    // pre: true
+    // ret: pkSuitPile
+
+    function IsComplete: Boolean;
+    // pre: true
+    // ret: Count = 13
+
+    // invariants
+    // AllSuit: (forall I: 0<=I<Count: Card(I).Suit = Suit)
+    // AllFaceUp: (forall I: 0 <=I<Count: Card(I).FaceUp)
+    // AllInPlace: (forall I: 0<=I<Count: Card(I).Value = I+1)
+  end;
+
+  TDeckPile =
+  class(TPile)
+  public
+    // construction/destruction
+    constructor Create;
+    // pre: true
+    // post: M contains all 52 cards of a deck of cards in some order
+
+    // queries
+    function Acceptable(ACard: TCard): Boolean; override;
+    // pre: true
+    // ret: not ACard.FaceUp
+    class function PileKind: TPileKind; override;
+    // pre: true
+    // ret: pkDeck
+
+    // commands
+    procedure Shuffle;
+    // pre: true
+    // post: M' is a (well-shuffled) permutation of 'M
+
+    // invariants:
+    // AllFaceDown: (forall I: 0 <=I<Count: not Card(I).FaceUp)
+  end;
+
+  //----------------------------------------------------------------------------
+  // TDiscardPile is the class for the discard pile in the solitaire game.
+  // It has the following properties:
+  // - all cards in the pile are face-up
+  //----------------------------------------------------------------------------
+  TDiscardPile =
+  class(TPile)
+  public
+    // queries
+    function Acceptable(ACard: TCard): Boolean; override;
+    // pre: true
+    // ret: ACard.FaceUp
+    class function PileKind: TPileKind; override;
+    // pre: true
+    // ret: pkDiscard
+
+    // invariants
+    // AllFaceUp: (forall I: 0 <=I<Count: Card(I).FaceUp)
+  end;
+
+  //----------------------------------------------------------------------------
+  // TTableauPile is the class for the tableau piles in the solitaire game.
+  // It has the following properties:
+  // - it has a bottom part (possibly empty) of cards which are all face-down
+  // - it has a top part (possibly empty) of cards which are all face-up
+  // - the cards in the top part have subsequent decreasing values
+  // - the cards in the top part have alternating red and black colors
+  //----------------------------------------------------------------------------
+  TTableauPile =
+  class(TPile)
+  private
+    FDownCount: Integer;
+  public
+    // queries
+    function DownCount: Integer; // number of face-down cards in the pile
+    // pre: true
+    // ret: (N i: 0 <= i < |M|: not M[i].FaceUp)
+    function Acceptable(ACard: TCard): Boolean; override;
+    // pre: true
+    // ret: ( (DownCount = Count) and ( ACard.FaceUp implies (ACard.Value = 13))
+    //      or
+    //      ( (DownCount < Count)
+    //        and (Top.Value = ACard.Value + 1)
+    //        and (Top.Color <> ACard.Color)
+    //        and ACard.FaceUp
+    //       )
+    class function PileKind: TPileKind; override;
+    // pre: true
+    // ret: pkTableau
+    function  CanFlipTop: Boolean;
+    // pre: true
+    // ret: (0 < Count) and not Top.FaceUp
+
+    // commands
+    procedure Put(ACard: TCard); override;
+    procedure Remove(var ACard: TCard); override;
+    procedure FlipTop;
+    // pre: (1 <= DownCount) and (DownCount = Count)       {or: not Top.FaceUp}
+    // effect: Top.Flip
+    // post: 0 <= DownCount = Count - 1
+
+    // invariants
+    // DownRange: 0 <= DownCount <= Count
+    // LowFaceDown: (forall I: 0 <= I < DownCount: not Card(I).FaceUp)
+    // HighFaceUp: (forall I: DownCount <= I < Count: Card(I).FaceUp)
+    // HighDecreasing:
+    //   (forall I: DownCount <=I< Count-1: Card(I).Value = 1 + Card(I+1).Value)
+    // HighAlternating:
+    //   (forall I: DownCount <= I < Count-1: Card(I).Color <> Card(I+1).Color)
+  end;
+
+function IntToSuit(AValue: Integer): TSuit;
+// pre: 1 <= AValue <= 4
+// ret: S s.t. Ord(S) = AValue
+
+implementation //===============================================================
+
+uses
+  Math, SysUtils;
+
+function IntToSuit(AValue: Integer): TSuit;
+const
+  SuitValues: array[1..4] of TSuit = (suHeart, suClub, suDiamond, suSpade);
+begin
+  // check precondition
+  Assert(AValue in [1..4],
+    Format('IntToSuit.pre failed; AValue = %d', [AValue]) );
+
+  Result := SuitValues[AValue];
+end;
+
+{ TCard }
+
+function TCard.Color: TCardColor;
+begin
+  case FSuit of
+    suHeart, suDiamond:
+      begin
+        Result := ccRed;
+      end;
+    suClub, suSpade:
+      begin
+        Result := ccBlack
+      end
+  end
+end;
+
+constructor TCard.Create(AValue: TValue; ASuit: TSuit);
+begin
+  inherited Create;
+
+  FValue := AValue;
+  FSuit := ASuit;
+  FFaceUp := false;
+end;
+
+function TCard.FaceUp: Boolean;
+begin
+  Result := FFaceUp;
+end;
+
+procedure TCard.Flip;
+begin
+  FFaceUp := not FFaceUp;
+end;
+
+procedure TCard.SetFaceUp(AFaceUp: Boolean);
+begin
+  FFaceUp := AFaceUp;
+end;
+
+function TCard.Suit: TSuit;
+begin
+  Result := FSuit;
+end;
+
+function TCard.Value: TValue;
+begin
+  Result := FValue;
+end;
+
+{ TPile }
+
+function TPile.Acceptable(ACard: TCard): Boolean;
+begin
+  Result := true;
+end;
+
+function TPile.Capacity: Integer;
+begin
+  Result := FCapacity;
+end;
+
+function TPile.Card(I: Integer): TCard;
+begin
+  // check pre-condition
+  Assert( (0 <= I) and (I < Count),
+    Format('TPile.Card.Pre failed; I = %d, Count = %d', [I, Count] ) );
+
+  Result := FList[I];
+end;
+
+function TPile.Count: Integer;
+begin
+  Result := FCount;
+end;
+
+constructor TPile.Create(ACapacity: Integer);
+begin
+  inherited Create;
+
+  FCapacity := ACapacity;
+  FCount := 0;
+  SetLength(FList, FCapacity);
+end;
+
+destructor TPile.Destroy;
+begin
+  Finalize(FList);
+
+  inherited;
+end;
+
+function TPile.IsEmpty: Boolean;
+begin
+  Result := Count = 0;
+end;
+
+class function TPile.PileKind: TPileKind;
+begin
+  Result := pkBase;
+end;
+
+procedure TPile.Put(ACard: TCard);
+begin
+  // check pre-condition
+  Assert( (Count <= Capacity) and Acceptable(ACard), 'TPile.Put.pre failed: %i');
+
+  Flist[FCount] := ACard;
+  FCount := FCount + 1;
+end;
+
+procedure TPile.Remove(var ACard: TCard);
+begin
+  // check pre-condition
+  Assert(Count > 0, 'TPile.Remove.pre failed');
+
+  ACard := FList[FCount - 1];
+  FCount := FCount - 1;
+end;
+
+function TPile.Top: TCard;
+begin
+  // check pre-condition
+  Assert(not IsEmpty, 'TPile.Top.pre failed');
+
+  Result := Card(Count - 1);
+end;
+
+{ TSuitPile }
+
+function TSuitPile.Acceptable(ACard: TCard): Boolean;
+begin
+  Result :=
+    (ACard.Suit = Suit)
+    and (ACard.FaceUp)
+    and ( ( (Count = 0) and (ACard.Value = 1))
+          or ( (Count > 0)
+               and (Card(Count-1).Value + 1 = ACard.Value) ) )
+
+end;
+
+constructor TSuitPile.Create(ACapacity: Integer; ASuit: TSuit);
+begin
+  // check pre-condition
+  Assert( 13 <= Acapacity,
+    Format('TSuitPile.Create.pre failed; ACapacity = %d', [ACapacity]) );
+
+  inherited Create(ACapacity);
+
+  FSuit := ASuit;
+end;
+
+function TSuitPile.IsComplete: Boolean;
+begin
+  Result := Count = 13;
+end;
+
+class function TSuitPile.PileKind: TPileKind;
+begin
+  Result := pkSuit;
+end;
+
+function TSuitPile.Suit: TSuit;
+begin
+  Result := FSuit;
+end;
+
+{ TDeckPile }
+
+function TDeckPile.Acceptable(ACard: TCard): Boolean;
+begin
+  Result := not ACard.FaceUp;
+end;
+
+constructor TDeckPile.Create;
+var
+  VSuit: TSuit;
+  VValue: TValue;
+  VCard: TCard;
+begin
+  inherited Create(52);
+
+  for VSuit := suHeart to suSpade do
+    for VValue := 1 to 13 do
+    begin
+      VCard := TCard.Create(VValue, VSuit);
+      Put(VCard);
+    end;
+end;
+
+class function TDeckPile.PileKind: TPileKind;
+begin
+  Result := pkDeck;
+end;
+
+procedure TDeckPile.Shuffle;
+var
+  I, J: Integer;
+  VCard: TCard;
+begin
+  // initialize random generator
+  Randomize;
+  for I := 0 to FCount - 1 do
+  begin
+    // get a random index
+    J := RandomRange(0, FCount - 1);
+
+    // swap card at position I with card at random index J
+    VCard := FList[I];
+    FList[I] := FList[J];
+    FList[J] := VCard;
+  end;
+end;
+
+{ TDiscardPile }
+
+function TDiscardPile.Acceptable(ACard: TCard): Boolean;
+begin
+  Result := ACard.FaceUp;
+end;
+
+class function TDiscardPile.PileKind: TPileKind;
+begin
+  Result := pkDiscard;
+end;
+
+{ TTableauPile }
+
+function TTableauPile.Acceptable(ACard: TCard): Boolean;
+begin
+  Result :=
+    ( (DownCount = Count) and
+      ( not ACard.FaceUp or (ACard.Value = 13) )
+    )
+    or
+    ( (DownCount < Count) and
+      (Top.Value = ACard.Value + 1) and
+      (Top.Color <> ACard.Color) and
+      ACard.FaceUp
+    )
+end;
+
+function TTableauPile.CanFlipTop: Boolean;
+begin
+  Result := (0 < Count) and not Top.FaceUp;
+end;
+
+function TTableauPile.DownCount: Integer;
+begin
+  Result := FDownCount;
+end;
+
+procedure TTableauPile.FlipTop;
+begin
+  // check precondition
+  Assert(CanFlipTop, 'TTableauPile.FlipTop.pre failed');
+
+  {not Top.FaceUp}
+  Top.Flip;
+  {Top.FaceUp}
+  FDownCount := FDownCount - 1;
+end;
+
+class function TTableauPile.PileKind: TPileKind;
+begin
+  Result := pkTableau;
+end;
+
+procedure TTableauPile.Put(ACard: TCard);
+begin
+  inherited;
+
+  if not ACard.FaceUp
+  then FDownCount := FDownCount + 1;
+end;
+
+procedure TTableauPile.Remove(var ACard: TCard);
+begin
+  inherited;
+
+  if not ACard.FaceUp
+  then FDownCount := FDownCount - 1;
+end;
+
+end.
+ 

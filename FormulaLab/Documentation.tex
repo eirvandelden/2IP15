@@ -1,0 +1,159 @@
+%
+%  untitled
+%
+%  Created by Etienne van Delden on 2008-07-03.
+%  Copyright (c) 2008 __MyCompanyName__. All rights reserved.
+%
+\documentclass[]{article}
+
+% Use utf-8 encoding for foreign characters
+\usepackage[utf8]{inputenc}
+
+% Setup for fullpage use
+\usepackage{fullpage}
+
+% Uncomment some of the following if you use the features
+%
+% Running Headers and footers
+%\usepackage{fancyhdr}
+
+% Multipart figures
+%\usepackage{subfigure}
+
+% More symbols
+%\usepackage{amsmath}
+%\usepackage{amssymb}
+%\usepackage{latexsym}
+
+% Surround parts of graphics with box
+\usepackage{boxedminipage}
+
+% Package for including code in the document
+\usepackage{listings}
+
+% If you want to generate a toc for each chapter (use with book)
+\usepackage{minitoc}
+
+% This is now the recommended way for checking for PDFLaTeX:
+\usepackage{ifpdf}
+
+%\newif\ifpdf
+%\ifx\pdfoutput\undefined
+%\pdffalse % we are not running PDFLaTeX
+%\else
+%\pdfoutput=1 % we are running PDFLaTeX
+%\pdftrue
+%\fi
+
+\ifpdf
+\usepackage[pdftex]{graphicx}
+\else
+\usepackage{graphicx}
+\fi
+\title{ 2IP15: Programming Methonds \\
+Documentation for Assignment 3, part 3: FormulaLab and Undo/Redo}
+\author{E.I.R. van Delden\\ student: 0618959}
+
+\date{2008-07-03}
+
+\begin{document}
+
+\ifpdf
+\DeclareGraphicsExtensions{.pdf, .jpg, .tif}
+\else
+\DeclareGraphicsExtensions{.eps, .jpg}
+\fi
+
+\maketitle
+
+
+\begin{abstract}
+  This document will give a, very, brief summary of my Undo/Redo Implementation for the FormulaLab program.
+\end{abstract}
+
+\section{Introduction}
+I have added 2 new units, \emph{UndoRedo} and \emph{TreeEditorCommands}. These units are situated in \begin{verbatim}
+  /Components/Base/UndoRedo.pas
+\end{verbatim}
+and \begin{verbatim}
+  /Companents/Base/TreeEditorCommands.pas
+\end{verbatim}
+respectively.\\
+
+\subsection{UndoRedo} % (fold)
+\label{sub:undoredo}
+The UndoRedo unit is exactly the same as seen in the Appendix of the UndoRedo note.
+% subsection undoredo (end)
+
+\subsection{TreeEditorCommands} % (fold)
+\label{sub:treeeditorcommands}
+TreeEditorCommands is based on the unit \emph{LineEditorCommands} from the extra UndoRedo note. 
+The following assumption was made:
+\begin{quote}
+ \emph{ ``Using the Undo and Redo commands, do not effect the clipboard.''}
+\end{quote}
+This is a commonly made assumption, seen in more applications, like Microsoft Word or the texteditor used for this document (Macromates' TextMate).\\ \\
+
+The following operations have been added to TreeEditorCommands, to support Undo-/Redoing:
+
+\begin{itemize}
+  \item DoClear
+  \item DoCut
+  \item DoDelete
+  \item DoExpand
+  \item DoPaste
+\end{itemize}
+
+Because of the above made assumption, DoCopy was ommitted. \\
+Every command has an \emph{create, execute, reverse} and \emph{reversible} method.
+\subsubsection{Create} % (fold)
+\label{ssub:create}
+ For each command the variable \emph{FTreeEditor} is given as an argument, so we can access the Tree form within \emph{command.execute}. Expand and Paste have an extra argument, for replacing a part of the tree.\\
+ All commands have at least 1 private field, \emph{FDeletedTree}. FDeletedTree stores the old tree that's been deleted (the entire tree, not an subtree nor a pointer to a father). 
+ 
+% subsubsection create (end)
+
+\subsubsection{Execute} % (fold)
+\label{ssub:execute}
+The code for the old implementation is literally copied to the execute method and slightly adjusted. The assert's and all code for the clipboard was removed.\\
+
+Preceding the copied code, there is an extra assignment 
+\begin{verbatim}
+  FDeletedTree := FTreeEditor;
+\end{verbatim}
+  So we don't lose any data when we want to undo the comman
+
+% subsubsection execute (end)
+
+\subsubsection{Reverse / Reversible} % (fold)
+\label{ssub:reverse_reversible}
+
+All given Commands change the tree in a way, so all commands are \emph{Reversible} (result = true).\\
+Reverse has for all commands the following implementation:
+\begin{verbatim}
+    FTreeEditor.Replace(FDeletedTree, FTreeEditor.Tree);
+\end{verbatim}
+It restores to the tree, before the command was executed.
+
+% subsubsection reverse_reversible (end)
+
+% subsection treeeditorcommands (end)
+
+\section{Implementation} % (fold)
+\label{sec:implemantation}
+An extra private variable has been added, FController: TController, that is created on Initialization. \\
+For the 5 original commands, the asserts and all code with respect to the clipboard have been untouched. The real working code has been moved to corresponding execute command in the unit TreeEditorCommands. 
+
+The implementations of the 5 original commands have been replaced with:
+\begin{verbatim}
+  Command := TCommand_DoClear.Create(FTreeEditor);
+  FController.DoCommand(Command);
+\end{verbatim}
+The corresponding Command object is created and the fed to the Controller, that executes the command and adjusts the 2 stacks accordingly.\\
+2 new buttons have been added, \emph{Undo} and \emph{Redo}. These buttons can be used to Undo or Redo a certain command. 
+\\ \\Note: The current implementation isn't bug free. 1 command can succesfully be undone and redone, but troubles arise when trying to undo more commands. Part of it is, so I believe, because of the chosen implementation.
+% section implementation (end)
+
+\bibliographystyle{plain}
+\bibliography{}
+\end{document}

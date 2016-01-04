@@ -1,0 +1,78 @@
+[#Main]
+name=Dummy
+
+[S_PdC]
+name=Porte de Clignancourt
+
+[S_CDG]
+name=Charles de Gaulle - Etoile
+
+[S_CEC]
+name=Champs-Elysees Clemenceau
+
+[S_BAR]
+name=Barbes RocheChouart
+
+[S_CON]
+name=Concorde
+
+[S_TUI]
+name=Tuileries
+
+[S_LRI]
+name=Louvre Rivoli
+
+[S_GdN]
+name=Gare du Nord
+
+[S_CHA]
+name=Chatelet
+
+[S_HdV]
+name=Hotel de Ville
+
+[S_SSD]
+name=Strasbourg St-Denis
+
+[S_StP]
+name=St-Paul
+
+[S_BAS]
+name=Bastille
+
+[S_REA]
+name=Reaumur Sebastopol
+
+[S_GdL]
+name=Gare de Lyon
+
+[L_L1]
+name=1
+oneway=0
+circular=1
+
+[P_L1]
+S0=CDG
+S1=CEC
+S2=CON
+S3=TUI
+S4=LRI
+S5=CHA
+S6=HdV
+S7=StP
+S8=BAS
+S9=GdL
+
+[L_L4]
+name=4
+oneway=1
+circular=0
+
+[P_L4]
+S0=PdC
+S1=BAR
+S2=GdN
+S3=SSD
+S4=REA
+S5=CHA
+

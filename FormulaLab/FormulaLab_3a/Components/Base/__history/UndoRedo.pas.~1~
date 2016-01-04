@@ -1,0 +1,142 @@
+unit UndoRedo;
+
+//
+//  This unit implements a simple Undo/Redo mechanism for interactive systems.
+//  It is inspired by the treatment of a similar example in Chapter 21 of
+//  Bertrand Meyer's "Object-Oriented Software Construction" (2nd edition).
+//
+//  The mechanism can be simply described by means of the following transition
+//  system of ( U, s, R ) triples, in which  s  is the state of the system ,
+//  U is the list of undoable commands and  R  is the list of redoable commands.
+//
+//                        Create
+//                          |-    ( <> , s0 , <> )
+//
+//
+//                        Do(c)
+//  ( U , s , R )           |-    ( U ++ <c> , c(s) , <> )   if  reversible(c)
+//                          |-    ( <> , c(s) , <> )         if ~reversible(c)
+//
+//                        Undo
+//  ( U ++ <c> , s , R )    |-    ( U , cRev(s) , <c> ++ R ) // cRev reverts c
+//
+//                        Redo
+//  ( U , s , <c> ++ R )    |-    ( U ++ <c> , c(s) , R )
+//
+//                        Destroy
+//  ( U , s , R )           |-
+//
+
+
+interface
+
+uses
+  Contnrs;
+
+type
+
+  // Abstract command class
+  TCommand =
+  class(TObject)
+    procedure Execute; virtual; abstract;
+    procedure Reverse; virtual; abstract;
+    function  Reversible: Boolean; virtual; abstract;
+  end;
+
+  // The controller maintains the undo list FU and redo list FR
+  TController =
+  class(TObject)
+    protected
+      FU: TObjectStack;
+      FR: TObjectStack;
+
+      procedure ClearStack(AStack: TObjectStack);
+    public
+      constructor Create;
+      destructor Destroy; override;
+
+      procedure Clear;
+      procedure DoCommand(ACommand: TCommand);
+      procedure Undo;
+      procedure Redo;
+      function  CanUndo: Boolean;
+      function  CanRedo: Boolean;
+  end;
+
+implementation //===============================================================
+
+{ TController }
+
+constructor TController.Create;
+begin
+  inherited Create;
+  FU := TObjectStack.Create;
+  FR := TObjectStack.Create;
+end;
+
+destructor TController.Destroy;
+begin
+  ClearStack(FU);
+  ClearStack(FR);
+  FU.Free;
+  FR.Free;
+  inherited Destroy;
+end;
+
+procedure TController.DoCommand(ACommand: TCommand);
+begin
+  ACommand.Execute;
+
+  if ACommand.Reversible
+  then FU.Push(ACommand)             // extend FU
+  else
+  begin
+    ClearStack(FU);                  // clear  FU
+    ACommand.Free;
+  end;
+
+  ClearStack(FR);                    // clear  FR
+end;
+
+procedure TController.Undo;
+var
+  VCommand: TCommand;
+begin
+  VCommand := FU.Pop as TCommand;
+  VCommand.Reverse;
+  FR.Push(VCommand);
+end;
+
+procedure TController.Redo;
+var
+  VCommand: TCommand;
+begin
+  VCommand := FR.Pop as TCommand;
+  VCommand.Execute;
+  FU.Push(VCommand);
+end;
+
+function TController.CanUndo: Boolean;
+begin
+  Result := FU.Count > 0;
+end;
+
+function TController.CanRedo: Boolean;
+begin
+  Result := FR.Count > 0;
+end;
+
+
+procedure TController.Clear;
+begin
+  ClearStack(FU);
+  ClearStack(FR);
+end;
+
+procedure TController.ClearStack(AStack: TObjectStack);
+begin
+  while AStack.Count > 0
+  do AStack.Pop.Free;
+end;
+
+end.

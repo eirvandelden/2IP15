@@ -1,0 +1,514 @@
+unit Main;
+//# BEGIN TODO  Completed by: author name, id.nr., date
+  { Replace this line by your text }
+//# END TODO
+
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, Grids, ComCtrls, ExtCtrls, StdCtrls,
+  // Solitaire units:
+  CardDeck, CardPiles, Game;
+
+type
+  TForm1 = class(TForm)
+    StatusBar1: TStatusBar;
+    Panel1: TPanel;
+    PageControl1: TPageControl;
+    TabSheetText: TTabSheet;
+    TabSheetImages: TTabSheet;
+    TabSheetGUI: TTabSheet;
+    DeckStringGrid: TStringGrid;
+    TableauStringGrid: TStringGrid;
+    ButtonNewGame: TButton;
+    ButtonNewCard: TButton;
+    ComboBoxFrom: TComboBox;
+    ComboBoxTo: TComboBox;
+    Label1: TLabel;
+    Label2: TLabel;
+    ButtonMoveCard: TButton;
+    ButtonFlip: TButton;
+    ButtonMovePile: TButton;
+    ComboBoxIndex: TComboBox;
+    Label3: TLabel;
+    Panel2: TPanel;
+    TableauDrawGrid: TDrawGrid;
+    DeckDrawGrid: TDrawGrid;
+    procedure FormCreate(Sender: TObject);
+    procedure ButtonNewGameClick(Sender: TObject);
+    procedure ButtonNewCardClick(Sender: TObject);
+    procedure ComboBoxFromChange(Sender: TObject);
+    procedure ComboBoxToChange(Sender: TObject);
+    procedure ButtonMoveCardClick(Sender: TObject);
+    procedure ButtonFlipClick(Sender: TObject);
+    procedure ComboBoxIndexChange(Sender: TObject);
+    procedure ButtonMovePileClick(Sender: TObject);
+    procedure DeckDrawGridDrawCell(Sender: TObject; ACol, ARow: Integer;
+      Rect: TRect; State: TGridDrawState);
+    procedure TableauDrawGridDrawCell(Sender: TObject; ACol, ARow: Integer;
+      Rect: TRect; State: TGridDrawState);
+    procedure DeckDrawGridMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Integer);
+    procedure DeckDrawGridDragOver(Sender, Source: TObject; X, Y: Integer;
+      State: TDragState; var Accept: Boolean);
+    procedure DeckDrawGridDragDrop(Sender, Source: TObject; X, Y: Integer);
+    procedure TableauDrawGridMouseDown(Sender: TObject;
+      Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+    procedure TableauDrawGridDragOver(Sender, Source: TObject; X,
+      Y: Integer; State: TDragState; var Accept: Boolean);
+    procedure TableauDrawGridDragDrop(Sender, Source: TObject; X,
+      Y: Integer);
+  private
+    { Private declarations }
+    FPileList: TStringList;
+
+    // drag information
+    FDragSource: TPile;            // pile where dragging begins
+    FDragSourceIndex: Integer;     // index in pile of dragged card
+    FDraggingPile: Boolean;        // true iff dragging a (tableau) pile of more
+                                   // than 1 card
+
+    procedure UpdateButtons;
+    procedure UpdateStatusBar;
+    procedure UpdateTextView;
+  public
+    { Public declarations }
+    FCardDeckPath: String;
+    FCardDeck: TCardDeck;
+    FGame: TGame;
+
+    // precondition functions
+    function CanNewCard: Boolean;
+
+    // commands
+    procedure UpdateViews;
+  end;
+
+var
+  Form1: TForm1;
+
+implementation //===============================================================
+
+{$R *.dfm}
+
+const
+  // path to directory for cardset 'standard' with tiny bitmaps
+  csCardsetStandard = '..\CardSets\bmp-cardset-standard-tiny\';
+  // path to directory for cardset 'naylor' (small square cards) 
+  csCardSetNaylor = '..\CardSets\bmp-cardset-naylor\';
+
+
+function TForm1.CanNewCard: Boolean;
+begin
+  Result := not (FGame.DeckPile.IsEmpty and FGame.DiscardPile.IsEmpty);
+end;
+
+procedure TForm1.UpdateViews;
+begin
+  UpdateButtons;
+  UpdateStatusBar;
+  UpdateTextView;
+
+  DeckDrawGrid.Repaint;
+  TableauDrawGrid.Repaint;
+
+  if FGame.Finished
+  then ShowMessage('You have won!');
+end;
+
+procedure TForm1.UpdateButtons;
+var
+  VFromPile, VToPile: TPile;
+begin
+  ButtonNewCard.Enabled := CanNewCard;
+
+//  with ComBoBoxFrom
+//  do VFromPile := (Items as TStringList).Objects[ItemIndex] as TPile;
+  VFromPile := FPileList.Objects[ComboBoxFrom.ItemIndex] as TPile;
+//  with ComBoBoxTo
+//  do VToPile := (Items as TStringList).Objects[ItemIndex] as TPile;
+  VToPile := FPileList.Objects[ComboBoxTo.ItemIndex] as TPile;
+  ButtonMoveCard.Enabled :=
+    FGame.CanMoveCard(VFromPile, VToPile);
+
+  if VFromPile is TTableauPile
+  then ButtonFlip.Enabled := FGame.CanFlipTop(VFromPile as TTableauPile)
+  else ButtonFlip.Enabled := false;
+
+  if (VFromPile is TTableauPile) and (VToPile is TTableauPile)
+  then
+    ButtonMovePile.Enabled :=
+      FGame.CanMoveSubPile(
+        ComboBoxIndex.ItemIndex,
+        VFromPile as TTableauPile,
+        VToPile as TTableauPile)
+  else ButtonMovePile.Enabled := false;
+end;
+
+procedure TForm1.UpdateStatusBar;
+begin
+  StatusBar1.SimpleText := Format('Moves: %d', [FGame.MovesCount] );
+end;
+
+procedure TForm1.UpdateTextView;
+var
+  VRow, VCol: Integer;
+  VSuit: TSuit;
+  VSuitPile: TSuitPile;
+  VTableauPile: TTableauPile;
+  I, J: Integer;
+begin
+  // fill DeckStringGrid with new data -----------------------------------------
+  with DeckStringGrid do
+  begin
+    // clear non-fixed cells
+    for VCol := 0 to ColCount - 1 do
+      Cells[VCol, 1] := '';
+
+    // fill cell with new data from DeckPile
+    if FGame.DeckPile.IsEmpty
+    then Cells[0, 1] := 'O'
+    else Cells[0, 1] := FCardDeck.CardText(FGame.DeckPile.Top);
+
+    // fill cell with new data from DiscardPile
+    if FGame.DiscardPile.IsEmpty
+    then Cells[1, 1] := 'O'
+    else Cells[1, 1] := FCardDeck.CardText(FGame.DiscardPile.Top);
+
+    // fill cells with new data from SuitPiles
+    for VSuit := Low(TSuit) to High(TSuit) do
+    begin
+      VSuitPile := FGame.SuitPile(VSuit);
+      if VSuitPile.IsEmpty
+      then Cells[3 + Ord(VSuit), 1] := 'O'
+      else Cells[3 + Ord(VSuit), 1] := FCardDeck.CardText(VSuitPile.Top)
+    end{for};
+  end{with};
+
+  // fill TableauStringGrid with new data --------------------------------------
+  with TableauStringgrid do
+  begin
+    // clear non-fixed cells
+    for VRow := 1 to RowCount - 1 do
+      for VCol := 1 to ColCount - 1 do
+        Cells[VCol, VRow] := '';
+
+    // fill cells with new data from Tableaupiles
+    for I := 1 to 7 do
+    begin
+      VTableauPile := FGame.TableauPile(I);
+      for J := 0 to VTableauPile.Count - 1 do
+      begin
+        VCol := I;
+        VRow := J + 1;
+        Cells[VCol, VRow] := FCardDeck.CardText(VTableauPile.Card(J))
+      end{for}
+    end{for}
+  end{with};
+
+end;
+
+
+procedure TForm1.FormCreate(Sender: TObject);
+var
+  I, J: Integer;
+  VSuit: TSuit;
+begin
+  // use cardset 'naylor'
+  FCardDeckPath := csCardsetNaylor;
+  // create standard card deck
+  FCardDeck := TCardDeck.Create;
+  FCardDeck.LoadFromFiles(FCardDeckPath);
+
+  // create game
+  FGame := TGame.Create;
+  FGame.NewGame;
+
+  // fill fixed row of DeckStringgrid
+  with DeckStringgrid.Rows[0] do
+  begin
+    Add('Deck');
+    Add('Discard');
+    Add('');
+    for VSuit := Low(TSuit) to High(TSuit)
+    do Add(FCardDeck.LongSuitName(VSuit));
+  end;
+
+  // fill fixed row of TableauStringGrid with names of tableau piles
+  with TableauStringGrid.Rows[0] do
+  begin
+    Add('');
+    for I := 1 to 7
+    do Add(Format('Tab %d', [I]));
+  end;
+  // fill fixed column of TableaustringGrid with row numbers
+  with TableauStringGrid.Cols[0] do
+  begin
+    for J := 1 to Count - 1
+    do Add(Format('%d', [J - 1]));
+  end;
+
+  // populate FPileList with names of and references to piles of FGame
+  FPileList := TStringList.Create;
+  for I := 1 to 7
+  do FPileList.AddObject(Format('Tab %d', [I]), FGame.TableauPile(I));
+  for VSuit := Low(TSuit) to High(TSuit)
+  do FPileList.AddObject(FCardDeck.LongSuitName(VSuit), FGame.SuitPile(VSuit));
+  FPileList.AddObject('Discard', FGame.DiscardPile);
+
+  ComboBoxFrom.Items := FPileList;
+  ComboBoxFrom.ItemIndex := 0;
+  ComboBoxTo.Items := FPileList;
+  ComboBoxTo.ItemIndex := 0;
+
+  with ComboBoxIndex.Items do
+    for I := 0 to 19 do
+      Add(IntToStr(I));
+  ComboBoxIndex.ItemIndex := 0;
+
+  UpdateViews;
+end;
+
+procedure TForm1.ButtonNewGameClick(Sender: TObject);
+begin
+  FGame.NewGame;
+
+  UpdateViews;
+end;
+
+procedure TForm1.ButtonNewCardClick(Sender: TObject);
+begin
+  {CanNewCard; hence not (FGame.DeckPile.IsEmpty and FGame.DiscardPile.IsEmpty}
+  if FGame.DeckPile.IsEmpty
+  then FGame.Recycle
+  else FGame.NewCard;
+
+  UpdateViews;
+end;
+
+procedure TForm1.ComboBoxFromChange(Sender: TObject);
+begin
+  UpdateViews;
+end;
+
+procedure TForm1.ComboBoxToChange(Sender: TObject);
+begin
+  Updateviews;
+end;
+
+procedure TForm1.ComboBoxIndexChange(Sender: TObject);
+begin
+  UpdateViews;
+end;
+
+procedure TForm1.ButtonMoveCardClick(Sender: TObject);
+var
+  VFromPile, VToPile: TPile;
+begin
+  VFromPile := FPileList.Objects[ComboBoxFrom.ItemIndex] as TPile;
+  VToPile := FPileList.Objects[ComboBoxTo.ItemIndex] as TPile;
+
+  { FGame.CanMoveCard(VFromPile, VToPile)}
+  FGame.MoveCard(VFromPile, VToPile);
+
+  UpdateViews;
+end;
+
+procedure TForm1.ButtonFlipClick(Sender: TObject);
+var
+  VTableauPile: TTableauPile;
+begin
+  VTableauPile := FPileList.Objects[ComboBoxFrom.ItemIndex] as TTableauPile;
+
+  { FGame.CanFlipTop(VTableauPile) }
+  FGame.FlipTop(VTableauPile);
+
+  UpdateViews;
+end;
+
+procedure TForm1.ButtonMovePileClick(Sender: TObject);
+var
+  VFromPile, VToPile: TTableauPile;
+  VIndex: integer;
+begin
+  VFromPile := FPileList.Objects[ComboBoxFrom.ItemIndex] as TTableauPile;
+  VToPile := FPileList.Objects[ComboBoxTo.ItemIndex] as TTableauPile;
+  VIndex := ComboBoxIndex.ItemIndex;
+
+  { FGame.CanMoveSubPile(VIndex, VFromPile, VToPile) }
+  FGame.MoveSubPile(VIndex, VFromPile, VToPile);
+
+  UpdateViews;
+end;
+
+procedure TForm1.DeckDrawGridDrawCell(Sender: TObject; ACol, ARow: Integer;
+            Rect: TRect; State: TGridDrawState);
+var
+  VBitmap: TBitmap;
+begin
+//# BEGIN TODO determine bitmap for cell
+{ VERVANG DIT DOOR EIGEN CODE VOOR DE VOLGENDE TAAK:
+    Ken aan VBitmap de bitmap toe die getekend moet worden in de cel met de
+    coordinaten ACol en ARow.
+    Voor het bepalen van de juiste bitmap zijn de volgende grootheden van
+    belang:
+    - de celcoordinaten ACol en ARow
+    - de toestand van het spel (te inspecteren via het veld FGame: TGame)
+    - de gegevens over de weergave van cards en piles (te inspecteren via het
+      veld FCardDeck: TCardDeck)
+    D.m.v. het volgende statement kan de bitmap getekend worden:
+      TableauDrawGrid.Canvas.Draw(Rect.Left, Rect.Top, VBitmap)
+
+
+}
+
+
+
+
+//# END TODO
+end;
+
+procedure TForm1.TableauDrawGridDrawCell(Sender: TObject; ACol,
+            ARow: Integer; Rect: TRect; State: TGridDrawState);
+var
+  VBitmap: TBitmap;
+begin
+  case ACol of
+    0:
+      begin
+        // draw row number
+        TableauDrawGrid.Canvas.TextOut(Rect.Left, Rect.Top, IntToStr(ARow));
+      end;
+    1..7:
+      begin
+//# BEGIN TODO determine bitmap for cell
+{ VERVANG DIT DOOR EIGEN CODE VOOR DE VOLGENDE TAAK:
+    Ken aan VBitmap de bitmap toe die getekend moet worden in de cel met de
+    coordinaten ACol en ARow.
+    Voor het bepalen van de juiste bitmap zijn de volgende grootheden van
+    belang:
+    - de celcoordinaten ACol en ARow
+    - de toestand van het spel (te inspecteren via het veld FGame: TGame)
+    - de gegevens over de weergave van cards en piles (te inspecteren via het
+      veld FCardDeck: TCardDeck)
+    D.m.v. het volgende statement kan de bitmap getekend worden:
+      TableauDrawGrid.Canvas.Draw(Rect.Left, Rect.Top, VBitmap)
+}
+//# END TODO
+      end
+  end{case}
+end;
+
+procedure TForm1.DeckDrawGridMouseDown(Sender: TObject;
+            Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+var
+  VCol, VRow: LongInt;
+begin
+//# BEGIN TODO body of TForm1.DeckDrawGridMouseDown
+{ VERVANG DIT DOOR EIGEN CODE VOOR DE VOLGENDE TAAK:
+  - Bepaal uit X en Y de bijbehorende celcoordinaten VCol en Vrow
+  - Voor cel 0: behandel als een click op DeckPile, d.w.z. NewCard of recycle
+  - Voor cel 2: doe niets
+  - Voor cel 1, 3, 4, 5, 6: Begin een Drag met 1 card van de bijbehorende pile
+}
+//# END TODO
+end;
+
+procedure TForm1.DeckDrawGridDragOver(Sender, Source: TObject; X, Y: Integer;
+            State: TDragState; var Accept: Boolean);
+var
+  VCol, VRow: LongInt;
+begin
+//# BEGIN TODO body of TForm1.DeckDrawGridDragover
+{ VERVANG DIT DOOR EIGEN CODE VOOR DE VOLGENDE TAAK:
+  - Bepaal uit X en Y de bijbehorende celcoordinaten VCol en Vrow
+  - Bepaal of een move van de drag source naar de bij deze cel behorende pile
+    mogelijk is; ken dit resultaat toe aan uitvoerparameter Accept
+}
+//# END TODO
+end;
+
+procedure TForm1.DeckDrawGridDragDrop(Sender, Source: TObject; X, Y: Integer);
+var
+  VCol, VRow: LongInt;
+begin
+//# BEGIN TODO body of TForm1.DeckDrawGridDragDrop
+{ VERVANG DIT DOOR EIGEN CODE VOOR DE VOLGENDE TAAK:
+  - Bepaal uit X en Y de bijbehorende celcoordinaten VCol en VRow
+  - Voer de move uit van de drag source naar de bij deze cel behorende pile
+}
+//# END TODO
+end;
+
+procedure TForm1.TableauDrawGridMouseDown(Sender: TObject;
+            Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+var
+  VCol, VRow: LongInt;
+  VTableauPile: TTableauPile;
+  VIndex: Integer;
+begin
+  TableauDrawGrid.MouseToCell(X, Y, VCol, VRow);
+
+  if (VCol <> -1) and (VRow <> -1) then
+  begin
+    VTableauPile := FGame.TableauPile(VCol);
+    VIndex := VRow;
+    if (VIndex = VTableauPile.Count - 1) then
+    begin // this is a click on the top card
+      if VTableauPile.CanFlipTop then
+      begin // flip from face down to face up
+        FGame.FlipTop(VTableauPile);
+        UpdateViews
+      end
+      else if Button = mbLeft then
+        with Sender as TDrawGrid do
+        begin // start a drag operation for a card
+          FDragSource := VTableauPile;
+          FDraggingPile := false;
+          FDragSourceIndex := -1;
+          BeginDrag(true);
+        end
+    end
+    else if VIndex < VTableauPile.Count - 1 then
+    begin
+      if Button = mbLeft then
+        with Sender as TDrawGrid do
+        begin // start a drag operation for a pile
+          FDragSource := VTableauPile;
+          FDraggingPile := true;
+          FDragSourceIndex := VIndex;
+          BeginDrag(true);
+        end
+    end
+  end
+end;
+
+procedure TForm1.TableauDrawGridDragOver(Sender, Source: TObject; X, Y: Integer;
+            State: TDragState; var Accept: Boolean);
+var
+  VCol, VRow: LongInt;
+begin
+//# BEGIN TODO body of TForm1.TableauDrawGridDragOver
+{ VERVANG DIT DOOR EIGEN CODE VOOR DE VOLGENDE TAAK:
+  - Bepaal uit X en Y de bijbehorende celcoordinaten VCol en Vrow
+  - Bepaal of een move van de drag source naar de bij deze cel behorende pile
+    mogelijk is; ken dit resultaat toe aan uitvoerparameter Accept
+}
+//# END TODO
+end;
+
+procedure TForm1.TableauDrawGridDragDrop(Sender, Source: TObject;
+            X, Y: Integer);
+var
+  VCol, VRow: LongInt;
+begin
+//# BEGIN TODO body of TForm1.TableauDrawGridDragDrop
+{ VERVANG DIT DOOR EIGEN CODE VOOR DE VOLGENDE TAAK:
+  - Bepaal uit X en Y de bijbehorende celcoordinaten VCol en VRow
+  - Voer de move uit van de drag source naar de bij deze cel behorende pile
+}
+//# END TODO
+end;
+
+end.

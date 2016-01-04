@@ -1,0 +1,58 @@
+[#Main]
+name=Tutorial Network
+
+[S_AUD]
+name=Auditorium
+
+[S_HG]
+name=Hoofdgebouw
+
+[S_WHL]
+name=W-Hal@
+
+[S_HAL]
+name=De Hal
+
+[S_WH]
+name=W-Hoog
+
+[S_WL]
+name=W-Laag
+
+[S_EH]
+name=E-Hoog
+
+[S_EL]
+name=E-Laag
+
+[L_LB]
+name=Blue Line
+oneway=0
+circular=0
+
+[P_LB]
+S0=HAL
+S1=WHL
+S2=EH
+
+[L_LG]
+name=Green Line
+oneway=0
+circular=0
+
+[P_LG]
+S0=EL
+S1=EH
+
+[L_LBK]
+name=Black Line
+oneway=0
+circular=0
+
+[P_LBK]
+S0=AUD
+S1=HG
+S2=WHL
+S3=WH
+S4=WL
+

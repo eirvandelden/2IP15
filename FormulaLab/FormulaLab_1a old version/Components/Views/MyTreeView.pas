@@ -1,0 +1,69 @@
+unit MyTreeView;
+
+//{$MODE Delphi}
+
+//# BEGIN TODO  Completed by: author name, id.nr., date
+  { Replace this line by your text }
+//# END TODO
+
+//------------------------------------------------------------------------------
+// This unit defines class TMyTreeView, which is a descendant of the standard
+// TTreeView component from the Delphi VCL (Vusial Component Library).
+// See the Delphi Help for information on TTreeView !!
+//
+
+interface
+
+uses
+  ComCtrls,
+  Nodes;
+
+type
+  TMyTreeView =
+  class(TTreeView)
+  private
+  public
+    procedure SelectNode(ANode: TNode);
+    procedure Show(ANode: TNode);
+  end;
+
+implementation
+
+{ TMyTreeView }
+
+procedure TMyTreeView.SelectNode(ANode: TNode);
+var
+  I: integer;
+begin
+  with Items do
+    for I := 0 to Count - 1 do
+      if Item[I].Data = ANode
+      then Selected := Item[I];
+end;
+
+procedure TMyTreeView.Show(ANode: TNode);
+//# BEGIN TODO
+// Add declarations of local variables and/or functions, if necessary
+//# END TODO
+
+  procedure RecAddSons(AFather: TTreeNode; ANode: TNode);
+  begin
+  //# BEGIN TODO
+  // Recursively build a tree of TTreeNode with root AFather corresponding to
+  // the formula tree with root ANode
+
+  //# END TODO
+  end;
+begin
+//# BEGIN TODO
+  { Add code corresponding to the following steps:}
+
+  // Clear Items
+  // Add a new root object corresponding to ANode
+  // Recursively add sons by means of procedure RecAddSons
+  // Show the tree in expanded form
+
+//# END TODO
+end;
+
+end.

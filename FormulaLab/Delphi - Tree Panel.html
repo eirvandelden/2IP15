@@ -1,0 +1,442 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+
+  <TITLE>Delphi - Tree Panel</TITLE>
+
+  <META NAME="description" 
+     CONTENT="Delphi uses a Canvas to draw on the screen.
+              Last Modified 06-12-04 ">
+  <META NAME="keywords" 
+     CONTENT="Delphi, delphi, canvas, draw lines
+             ">
+  <META NAME="Revision history" 
+     CONTENT="06-12-04 - Started file
+              06-10-07 - minor typo fix
+              ">
+  <META NAME="author" 
+     CONTENT="Robert Clemenzi">
+
+
+</head>
+<body>
+
+<a name="Intro"> <center> <H3> Delphi - Tree Panel </H3></center></a>
+
+Microsoft provides a TreeViewer - in Delphi,
+a wrapper component is available via
+<b>Win32 / TreeView</b>. Unfortunately, neither
+Windows nor Delphi provides a good tutorial on how, or why,
+to use this ... perhaps this page will help.
+
+<p>
+<center>
+   <a href="#Overview">Overview</a>
+ | <a href="#Properties">Properties</a>
+ | <a href="#Methods">Methods</a>
+ | <a href="#Examples">Examples in the Delphi Help</a>
+ | <a href="#Images">Images</a>
+ | <a href="#Tutorial">Simple Tutorial</a>
+ | <a href="#"></a>
+ | <a href="#Click">Click or Double Click a Node</a>
+
+<!--
+ | <a href="#"></a>
+ | <a href="#"></a>
+-->
+
+</center>
+
+<p><a name="Overview"> <! added 06-12-04 >
+<hr><! ********************************************************>
+<center> <H3> Overview </H3></center></a>
+
+The TreeView component is used to display an hierarchical
+list of nodes - similar to the directory view in Windows Explorer. 
+Each node is an instance of TTreeNode.
+
+TTreeView.Items (an instance of TTreeNodes) manages the node collection.
+
+<p>
+In a basic tree list, the nodes are just text.
+It is also possible to have the nodes associated with
+objects or records (ie, they can store a pointer).
+
+<p>
+Each node has 2 index numbers - one absolute and one relative to
+its parent node. When new nodes are added, or existing nodes are deleted,
+the indices of the other nodes change accordingly.
+
+
+<p><a name="Properties"> <! added 06-12-04 >
+<hr><! ********************************************************>
+<center> <H3> Basic Properties </H3></center></a>
+
+<ul><table border=1 cellpadding=5 width=85%>
+ <tr valign=top><th>Component <th>Property  <th>Comments
+
+ <tr valign=top><td rowspan=7 >TTreeView <td>Items  
+    <td>TTreeNodes object - main access to nodes
+<ul><pre>
+cnt      := TreeView1.Items.Count;
+SomeNode := TreeView1.Items[5];    // Zero based access
+                                   //   0 to Count-1
+</pre></ul>
+ <tr valign=top> <td>Selected
+    <td>Use this to access or set the currently selected node.
+
+     <p>
+     If the RightClickSelect property is True, 
+     this may differ from the node that is highlighted to indicate selection.
+ <tr valign=top> <td>RightClickSelect
+    <td>When True, it causes the Selected property to change when a node
+        is right clicked - default=False
+ <tr valign=top> <td>HideSelection
+    <td>When True, the highlight is hidden when focus move to another control;
+        when False, the node always appears selected - default=True
+ <tr valign=top> <td>ShowButtons
+    <td>Controls display of the +/- buttons - default=True
+ <tr valign=top> <td>ShowLines
+    <td>Controls display of lines that link child nodes 
+         to their corresponding parent nodes - default=True
+ <tr valign=top> <td>Indent
+    <td>Specifies the number of pixels child nodes are indented - default=19
+
+<! **** >
+ <tr valign=top><td rowspan=2 >TTreeNodes <td>Count
+    <td>The number of nodes
+ <tr valign=top> <td>Item
+    <td>Used to access to a node by its position. Zero is the first node.
+<ul><pre>
+FirstNode := TreeView1.Items.Item[0];
+</pre></ul>
+can be written
+<ul><pre>
+FirstNode := TreeView1.Items[0];
+</pre></ul>
+Very slow to use.
+
+<! **** >
+ <tr valign=top><td rowspan=5 >TTreeNode <td>Text
+    <td>What is displayed
+ <tr valign=top> <td>Level
+    <td>Level of indentation of this node within the tree view control -
+        zero is the top
+ <tr valign=top> <td>Data
+    <td>Points to an object or record
+<ul><pre>
+PMyRec(TreeView1.Selected.Data)^.FName
+</pre></ul>
+
+ <tr valign=top> <td>Selected
+    <td>Boolean - True for the currently selected node
+ <tr valign=top> <td>Focused
+    <td>Controls the node's appearance - I can't make setting this do anything
+
+</table></ul>
+
+
+<p><a name="Methods"> <! added 06-12-04 >
+<hr><! ********************************************************>
+<center> <H3> Basic Methods </H3></center></a>
+
+<ul><table border=1 cellpadding=5 width=85%>
+ <tr valign=top><th>Component <th>Method  <th>Comments
+
+ <tr valign=top><td rowspan=6 >TTreeView <td>OnCompare
+    <td>Use this to provide a non-alphabetic sort order.
+ <tr valign=top> <td>OnEditing
+    <td>Called before the user edits a node's Text property.
+        Set AllowEdit to False to prevent 
+        the user from editing the specified node.
+ <tr valign=top> <td>OnEdited
+    <td>Called after the user edits a node's Text property.
+        Use this to make the name change permanent
+        - update filename, table field value, etc.
+ <tr valign=top> <td>GetNodeAt(x, y)
+    <br>GetHitTestInfoAt(x, y)   
+    <td>Used with mouse position for drag and drop 
+        (see example in the help)
+ <tr valign=top> <td>LoadFromFile, LoadFromStream, SaveToFile, SaveToStream
+    <td>The data format is not specified. My experiments indicate that
+        only the node text is saved, Tabs are used for level indications. 
+        (Not very useful.)
+
+ <tr valign=top> <td>OnClick, OnDblClick, OnContextPopup, ...
+    <td>For each of these, there is only one event for the entire tree list,
+        use <b>Selected</b> to get the node.
+
+<ul><pre>
+procedure TForm1.TreeView1DblClick(Sender: TObject);
+begin
+  Edit1.Text := TreeView1.Selected.Text;
+end;
+</pre></ul>
+
+<! **** >
+ <tr valign=top><td rowspan=2 >TTreeNodes <td>AddChildFirst, AddChild, 
+     AddChildObjectFirst, AddChildObject, AddFirst, Add, AddObjectFirst, 
+     AddObject, Insert
+    <td>Used to add nodes
+
+     <p>
+     I see no difference between Add and AddChild.
+
+ <tr valign=top> <td>BeginUpdate <br>EndUpdate
+    <td>Use BeginUpdate to prevent screen repaints and 
+        to speed up your code while adding nodes to the tree view.
+        Use EndUpdate to update the screen.
+
+<! **** >
+ <tr valign=top><td rowspan=5 >TTreeNode <td>EditText
+    <td>Allows the user to modify the displayed text.
+        OnEditing is called before the node is placed in edit mode.
+        OnEdited is called if the value is changed.
+        (Esc cancels the change.)
+
+<ul><pre>
+TreeView1.Items [3].Selected := true;
+TreeView1.Items [3].EditText;
+</pre></ul>
+
+ <tr valign=top> <td>GetNext
+    <td>Returns the next node including nodes that aren't visible and child nodes.
+
+ <tr valign=top> <td>GetNextSibling
+    <td>Returns the next node in the tree view at the same level as the calling node,
+        regardless of whether it's visible.
+
+ <tr valign=top> <td>GetNextVisible
+    <td>Returns the next visible node in the tree view after the calling node.
+
+ <tr valign=top> <td>GetFirstChild, GetNextChild, GetPrevChild
+    <td>Locate a node in the list of immediate children of the tree view node.
+
+
+</table></ul>
+
+
+<p><a name="Examples"> <! added 06-12-04 >
+<hr><! ********************************************************>
+<center> <H3> Examples in the Delphi Help </H3></center></a>
+
+There aren't many examples in the Delphi 5 help - these are
+the useful ones that I know about.
+
+<ul><dl>
+ <dt>TTreeNodes.Add
+ <dd>How to add just the text labels
+
+<p>
+ <dt>TTreeNodes.Count <br>TTreeNode.Data
+ <dd>Very good example showing how to associate records with a tree view -
+     add to currently selected node, retrieve data
+
+<p>
+ <dt>TCustomTreeView.GetNodeAt
+ <dd>How to use GetNodeAt and GetHitTestInfoAt
+
+<p>
+ <dt>TTreeNode.GetNext
+ <dd>
+
+<p>
+ <dt>TTreeNode.GetNextChild
+ <dd>
+
+<p>
+</dl></ul>
+
+<p><a name="Images"> <! added 06-12-04 >
+<hr><! ********************************************************>
+<center> <H3> Images </H3></center></a>
+
+The TreeView component is capable of displaying 
+zero, one, or two images to the left of any node.
+
+<ul><pre>
+S I Node text
+| |
+| ----- Normal/Selected image (changes automatically)
+------- State image
+</pre></ul>
+
+
+Based on trial and error (there is no help)
+the images should be 16x16 *.bmp files -
+the size of the *.bmp files in
+<ul><pre>
+C:\Program Files\Common Files\Borland Shared\Images\Icons\
+</pre></ul>
+
+<p>
+When <b>ImageIndex</b> and <b>SelectedIndex</b> contain different values,
+the image is automatically changed when you click on (select)
+that node.
+(For example, consider the open and closed directory folders
+in Windows Explorer.)
+
+<p>
+The <b>State</b> image is intended to show both states of a check box, radio button,
+and similar state indicators ... however, you may use it
+for anything you like.
+
+
+<ul><table border=1 cellpadding=5>
+
+ <tr valign=top><th>Property
+  <th>Usage
+
+ <tr valign=top><td>TCustomTreeView.Images
+  <td>This should point to an ImageList
+
+ <tr valign=top><td>TTreeNode.ImageIndex
+  <td>This selects an image from TCustomTreeView.Images
+
+ <tr valign=top><td>TTreeNode.SelectedIndex
+  <td>Specifies the image from TCustomTreeView.Images 
+      to display when the tree node is selected
+
+ <tr valign=top><td>TTreeNode.OverlayIndex
+  <td>Specifies the image from TCustomTreeView.Images 
+      to draw transparently over the current image, 
+      for example. an X to indicate "no longer available"
+
+
+ <tr valign=top><td>
+  <td>
+
+ <tr valign=top><td>TCustomTreeView.StateImages
+  <td>This should point to an ImageList
+
+ <tr valign=top><td>TTreeNode.StateIndex
+  <td>This selects an image from TCustomTreeView.StateImages
+
+
+ <tr valign=top><td>
+  <td>
+
+ <tr valign=top><td>TCustomTreeView.OnGetImageIndex
+  <td rowspan=2>These can be used to change the image index for a node 
+      before it is drawn ... however, since they are called for every node, you
+      must test to determine which node is being passed. 
+      If present, keep these simple.
+
+ <tr valign=top><td>TCustomTreeView.OnGetSelectedIndex
+  <!td>
+
+
+</table></ul>
+
+Both <b>Images</b> and <b>StateImages</b> 
+specify (point to) a list of images - they may be the same or different.
+If neither one is set, then no images are displayed.
+
+<p>
+Specific images are selected via the indices
+
+<ul>
+ <li><b>ImageIndex</b> and <b>SelectedIndex</b> point to
+     <b>Images</b>
+ <li><b>StateIndex</b> points to <b>StateImages</b>
+</ul>
+
+The first image in the associated list is zero (0),
+ minus one (-1) hides the image.
+
+
+<p><a name="Tutorial"> <! added 06-12-04 >
+<hr><! ********************************************************>
+<center> <H3> Simple Tutorial </H3></center></a>
+
+
+<ul>
+
+ <li>Create a new application
+
+ <li>On the form, place
+<ul><pre>
+<b> Tab       Component</b>
+Win32      TImageList
+Win32      TTreeView
+</pre></ul>
+
+
+ <li>Set the following properties <p>
+
+<table border=1 cellpadding=5>
+ <tr valign=top><th>Component <th>Property  <th>Value <th>Comments
+
+ <tr valign=top><td rowspan=2 >TreeView1 <td>Images   <td>ImageList1
+    <td>&nbsp;
+ <tr valign=top> <td>StateImages    <td>ImageList1    
+    <td>&nbsp;
+
+</table>
+
+<p>
+ <li>Double click <b>ImageList1</b> (that opens a dialog box)
+
+ <li>Click the <b>Add...</b> button
+
+ <li>Select several *.bmp files from
+<pre>
+   C:\Program Files\Common Files\Borland Shared\Images\Icons\
+</pre>
+
+ <li>Double click <b>TreeView1</b> (that opens a dialog box)
+
+ <li>Add several nodes - enter Text and 3 indices 
+
+</ul>
+
+
+Test the form
+
+<ul>
+ <li>Compile and run
+
+ <li>Open the tree, click several nodes and watch the icons
+
+</ul>
+
+
+
+<!--
+
+<p><a name=""> <! added x >
+<hr><! ********************************************************>
+<center> <H3>  </H3></center></a>
+
+
+
+
+<p><a name=""> <! added x >
+<hr><! ********************************************************>
+<center> <H3>  </H3></center></a>
+
+-->
+
+<p><a name="end">
+<hr><! ********************************************************>
+</a>
+
+<address>
+Author: Robert Clemenzi -
+<a href = "mailto:clemenzi@cpcug.org?subject=Languages/Delphi - TreePanel.html"
+    >clemenzi@cpcug.org</a>
+</address>
+
+<h5>URL: http:// <a href="http://cpcug.org/">cpcug.org</a> /
+<a href="http://cpcug.org/user/">user</a> /
+<a href="http://cpcug.org/user/clemenzi/">clemenzi</a> /
+<a href="http://cpcug.org/user/clemenzi/technical">technical</a> /
+<a href="http://cpcug.org/user/clemenzi/technical/Languages/">Languages</a> /
+<a href="http://cpcug.org/user/clemenzi/technical/Languages/Delphi/">Delphi</a> /
+<a href="http://cpcug.org/user/clemenzi/technical/Languages/Delphi/TreePanel.html"
+                                                            >TreePanel.html</a>
+</h5>
+
+</body>
+</html>
+
